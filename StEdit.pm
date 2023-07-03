@@ -52,6 +52,12 @@ sub new {
 # delete function
 # delete each line matching the address
 # or if no address, delete all lines
+# addr is of form:
+#   "^string"
+#   "string\$"
+#   "string"
+#   "st\.\*ng"
+#   "\\bstring\$"
 # parameter: optional address
 sub delete {
 	my $self = shift;

@@ -4,9 +4,14 @@ use warnings;
 use lib "$ENV{HOME}/stedit";
 use StEdit;
 
-my $eobject = StEdit->new("/home/robert/junk.txt");
+my $addr = "^this\\b";
 
-my $count = $eobject->delete("^\/mnt\/ad64");
+my $eobject = StEdit->new("/home/robert/junk.txt");
+print "######### original############\n";
+$eobject->display();
+print "##############################\n";
+
+my $count = $eobject->delete($addr);
 print "$count lines deleted\n";
 
 $eobject->display();

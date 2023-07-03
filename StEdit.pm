@@ -59,6 +59,7 @@ sub new {
 #   "st\.\*ng"
 #   "\\bstring\$"
 # parameter: optional address
+# return no of lines deleted
 sub delete {
 	my $self = shift;
 	my $addr = shift;
@@ -84,6 +85,42 @@ sub delete {
 	return $count;
 }
 
+# sub to subsitute in each line of the file
+# parameters: pattern, replacement, modifier
+# returns no of subsitutions
+sub subst {
+	my $self = shift;
+	my $patt = shift;
+	my $repl = shift;
+	my $modi = shift;
+
+	# the modifier can be
+	# i - case insensitive
+	# g - global search in line
+	# not just first occurence
+	# search each line
+	my $count = 0;
+	my $noofmatches;
+	if ($modi eq "g") {
+		foreach my $line (@efile) {
+			$noofmatches = $line =~ s/$patt/$repl/g;
+			# add up matches
+			$count = $count + $noofmatches;
+		}
+	} elsif ($modi eq "i") {
+		foreach my $line (@efile) {
+			$noofmatches = $line =~ s/$patt/$repl/i;
+			$count = $count + $noofmatches;
+		}
+	} else {
+		foreach my $line (@efile) {
+			$noofmatches = $line =~ s/$patt/$repl/;
+			$count = $count + $noofmatches;
+		}
+	}
+	# return no of matches
+	return $count;
+}
 # display the buffer for testing purposes
 sub display {
 	my $self = shift;

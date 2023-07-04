@@ -58,12 +58,25 @@ sub new {
 #   "string"
 #   "st\.\*ng"
 #   "\\bstring\$"
-# parameter: optional address
+# parameter: address pattern to match,optional modifier i - case insensitive match
 # return no of lines deleted
 sub delete {
 	my $self = shift;
+	# there must be 2 or 3 parameters
+	# if there is no address pattern - return error
+	if (scalar(@_) 
 	my $addr = shift;
 
+	# modi may have values: undefined, defined with no value, or have a value
+
+	my $modi;
+	if ($#_ == 0) {
+		# $modi is defined but may or may not have a value
+		$modi = shift;
+		# undefine it if it does not contain i or g or both.
+		# empty is also disqualified
+		undef $modi if $modi !~ /^i$|^g$|^ig$|^gi$/;
+	}
 	# delete all lines that match address
 	# if address is "" then delete all lines
 	# copy non matching lines to new array
@@ -92,7 +105,17 @@ sub subst {
 	my $self = shift;
 	my $patt = shift;
 	my $repl = shift;
-	my $modi = shift;
+
+	# modi may have values: undefined, defined with no value, or have a value
+
+	my $modi;
+	if ($#_ == 0) {
+		# $modi is defined but may or may not have a value
+		$modi = shift;
+		# undefine it if it does not contain i or g or both.
+		# empty is also disqualified
+		undef $modi if $modi !~ /^i$|^g$|^ig$|^gi$/;
+	}
 
 	# the modifier can be
 	# i - case insensitive
@@ -101,23 +124,37 @@ sub subst {
 	# search each line
 	my $count = 0;
 	my $noofmatches;
-	if ($modi eq "g") {
-		foreach my $line (@efile) {
-			$noofmatches = $line =~ s/$patt/$repl/g;
-			# add up matches
-			$count = $count + $noofmatches;
-		}
-	} elsif ($modi eq "i") {
-		foreach my $line (@efile) {
-			$noofmatches = $line =~ s/$patt/$repl/i;
-			$count = $count + $noofmatches;
+	# $modi may or may not be defined
+	if (defined($modi)) {
+		if ($modi eq "g") {
+print "got g\n";
+			foreach my $line (@efile) {
+				$noofmatches = $line =~ s/$patt/$repl/g;
+				# add up matches
+				$count = $count + $noofmatches;
+			}
+		} elsif ($modi eq "i") {
+print "got i\n";
+			foreach my $line (@efile) {
+				$noofmatches = $line =~ s/$patt/$repl/i;
+				$count = $count + $noofmatches;
+			}
+		} elsif ($modi =~ /i/ and $modi =~ /g/) {
+print "got ig\n";
+			foreach my $line (@efile) {
+				$noofmatches = $line =~ s/$patt/$repl/ig;
+				$count = $count + $noofmatches;
+			}
+
 		}
 	} else {
+print "no modifier\n";
 		foreach my $line (@efile) {
 			$noofmatches = $line =~ s/$patt/$repl/;
 			$count = $count + $noofmatches;
-		}
+			}
 	}
+
 	# return no of matches
 	return $count;
 }

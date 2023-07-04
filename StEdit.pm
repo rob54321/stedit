@@ -61,38 +61,67 @@ sub new {
 # parameter: address pattern to match,optional modifier i - case insensitive match
 # return no of lines deleted
 sub delete {
+	# get the no of parameters passed
+	my $count = scalar (@_);
+	
 	my $self = shift;
+
 	# there must be 2 or 3 parameters
 	# if there is no address pattern - return error
-	if (scalar(@_) 
-	my $addr = shift;
+	return undef if $count < 2;
 
-	# modi may have values: undefined, defined with no value, or have a value
-
+	# get parameters
+	# 2 parameters means pattern address but no pattern modifier
+	# 3 parameters means pattern address and pattern modifier
+	my $pattern;
 	my $modi;
-	if ($#_ == 0) {
-		# $modi is defined but may or may not have a value
+	if ($count == 2) {
+		$pattern = shift;
+		$modi = undef;
+	} elsif ($count == 3) {
 		$modi = shift;
-		# undefine it if it does not contain i or g or both.
-		# empty is also disqualified
-		undef $modi if $modi !~ /^i$|^g$|^ig$|^gi$/;
+
+		# if the modifier is not i
+		# i is for case insensitive
+		# set to undef
+		$modi = undef unless $modi eq "i";
 	}
+
 	# delete all lines that match address
 	# if address is "" then delete all lines
 	# copy non matching lines to new array
 	# set efile = to new array
 	# return no of lines deleted
 	my @temparray = ();
-	my $count = 0;
-	foreach my $line (@efile) {
-		if ($line =~ /$addr/) {
-			# delete line and count it
-			$count++;
-		} else {
-			# keep line
-			push @temparray, $line;
+
+	# reset count for no of lines deleted.
+	$count = 0;
+
+	# if modifier is i
+	if ($modi eq "i") {
+		foreach my $line (@efile) {
+			# case insensitive pattern
+			if ($line =~ /$pattern/i) {
+				# delete line and count it
+				$count++;
+			} else {
+				# keep line
+				push @temparray, $line;
+			}
+		}
+	} else {
+		foreach my $line (@efile) {
+			# case sensitive search
+			if ($line =~ /$pattern/) {
+				# delete line and count it
+				$count++;
+			} else {
+				# keep line
+				push @temparray, $line;
+			}
 		}
 	}
+	
 	# set efile to new array
 	@efile = @temparray;
 	return $count;

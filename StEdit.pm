@@ -102,7 +102,6 @@ sub delete {
 		return -1;
 	}
 	# debug print parameters
-	print "pattern = $pattern ; modifier = $modi\n" if $DEBUG;
 	# delete all lines that match address
 	# if address is "" then delete all lines
 	# copy non matching lines to new array

@@ -4,10 +4,10 @@ use warnings;
 use lib "$ENV{HOME}/stedit";
 use StEdit;
 
-my $addr = "thi";
-my $patt = "this is\$";
-my $repl = "Jkl";
-my $modi = "ig";
+my $addr;
+my $patt = "\/mnt\/ad64\$";
+my $repl = "/mnt/newdirectory";
+my $modi = "";
 my $count;
 
 my $eobject = StEdit->new("/home/robert/junk.txt");

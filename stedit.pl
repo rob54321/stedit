@@ -4,9 +4,9 @@ use warnings;
 use lib "$ENV{HOME}/stedit";
 use StEdit;
 
-my $addr = "one\$";
-my $patt = "\/mnt\/ad64\$";
-my $repl = "/mnt/newdirectory";
+my $addr = "ONE\$";
+my $patt = "^this";
+my $repl = "TTHHIISS";
 my $modi = "";
 my $count;
 
@@ -20,7 +20,7 @@ $count = $eobject->delete($addr);
 $eobject->display();
 print "##############################\n";
 
-$eobject->write();
+# $eobject->write();
 
 $count = $eobject->subst($patt, $repl, $modi);
 

@@ -198,11 +198,14 @@ sub subst {
 	my $noofmatches;
 	# substitutions depend on the modifier
 	# "" means no modifier
+
+	# for debugging
+	my $oldline if $DEBUG;
 	if ($modi eq "g") {
 		foreach my $line (@efile) {
 			$noofmatches = $line =~ s/$patt/$repl/g;
 			#for debug
-			print "subst: $line\n" if $DEBUG;
+			print "subst: $line\n" if $DEBUG and ($noofmatches > 0);
 			
 			# add up matches
 			$count = $count + $noofmatches;
@@ -211,7 +214,7 @@ sub subst {
 		foreach my $line (@efile) {
 			$noofmatches = $line =~ s/$patt/$repl/i;
 			#for debug
-			print "subst: $line\n" if $DEBUG;
+			print "subst: $line\n" if $DEBUG and ($noofmatches > 0);
 			
 			$count = $count + $noofmatches;
 		}
@@ -219,16 +222,18 @@ sub subst {
 		foreach my $line (@efile) {
 			$noofmatches = $line =~ s/$patt/$repl/ig;
 			#for debug
-			print "subst: $line\n" if $DEBUG;
+			print "subst: $line\n" if $DEBUG and ($noofmatches > 0);
 			
 			$count = $count + $noofmatches;
 		}
 
 	} else {
 		foreach my $line (@efile) {
+			# for debug
+			$oldline = $line if $DEBUG;
 			$noofmatches = $line =~ s/$patt/$repl/;
 			#for debug
-			print "subst: $line\n" if $DEBUG;
+			print "old line: $oldline\nnewline: $line\n" if $DEBUG and ($noofmatches > 0);
 			
 			$count = $count + $noofmatches;
 		}

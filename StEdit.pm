@@ -226,6 +226,15 @@ sub write {
 	# get parameters
 	my $self = shift;
 
+	# write the efile to disk
+	open (my $fh, ">", $fname) or die "Could not open $fname for writing: $!\n";
+
+	foreach my $line (@efile) {
+		print $fh "$line\n";
+	}
+
+	# close file
+	close $fh;
 }
 	
 # display the buffer for testing purposes

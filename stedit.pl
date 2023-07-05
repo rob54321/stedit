@@ -15,14 +15,14 @@ print "######### original############\n";
 $eobject->display();
 print "##############################\n";
 
-$count = $eobject->delete();
+$count = $eobject->delete($addr, "i");
 print "$count lines deleted\n";
 print "address = " . $addr . "\n";
 
 $eobject->display();
 print "##############################\n";
 
-$count = $eobject->subst($patt);
+$count = $eobject->subst($patt, $repl, $modi);
 print "$count subsitutions made\n";
 print "pattern = " . $patt . "\n";
 

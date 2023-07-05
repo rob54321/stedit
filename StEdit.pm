@@ -13,6 +13,7 @@ package StEdit;
 # -- $ end of line or end of file
 use strict;
 use warnings;
+use File::Copy;
 
 # DEBUG FLAG, true for debugging or else false
 my $DEBUG = 1;
@@ -24,6 +25,8 @@ my $fname;
 my @efile = ();
 
 # constructor.
+# the file is copied to filename.bak
+# filename.bak is overwritten if it exists.
 # parameter is the name of the file to edit
 # the file is read line by line into an array, 
 # a class variable.
@@ -34,6 +37,9 @@ sub new {
 	# get file name
 	$fname = shift;
 	
+	# make a backup copy to fname.bak
+	copy($fname, $fname . ".bak") or die "Could not copy $fname to $fname.bak : $!\n" unless -f $fname . ".bak";
+
 	#open file for reading
 	open (my $fh, "<", $fname) or die "Could not open $fname: $!\n";
 	# read all lines
@@ -214,6 +220,14 @@ sub subst {
 	# return no of matches
 	return $count;
 }
+
+# method to write file to disk
+sub write {
+	# get parameters
+	my $self = shift;
+
+}
+	
 # display the buffer for testing purposes
 sub display {
 	my $self = shift;

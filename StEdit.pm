@@ -112,12 +112,15 @@ sub delete {
 	# reset count for no of lines deleted.
 	$count = 0;
 
+	# for debug
+	print "pattern = $pattern ; modifier = $modi\n" if $DEBUG;
 	# if modifier is i
 	if ($modi eq "i") {
-		print "delete: modifier i\n" if $DEBUG;
 		foreach my $line (@efile) {
 			# case insensitive pattern
 			if ($line =~ /$pattern/i) {
+				# DEBUG: print the line
+				print "deleted: $line\n" if $DEBUG;
 				# delete line and count it
 				$count++;
 			} else {
@@ -126,10 +129,11 @@ sub delete {
 			}
 		}
 	} else {
-		print "delete: modifier none \n" if $DEBUG;
 		foreach my $line (@efile) {
 			# case sensitive search
 			if ($line =~ /$pattern/) {
+				# DEBUG: print the line
+				print "deleted: $line\n" if $DEBUG;
 				# delete line and count it
 				$count++;
 			} else {
@@ -138,6 +142,9 @@ sub delete {
 			}
 		}
 	}
+	
+	# for debug
+	print "$count lines deleted\n" if $DEBUG;
 	
 	# set efile to new array
 	@efile = @temparray;
@@ -179,6 +186,9 @@ sub subst {
 		return -1;
 	}
 
+	# for debug
+	print "pattern = $patt : replacement = $repl : modifier = $modi\n" if $DEBUG;
+	
 	# the modifier can be
 	# i - case insensitive
 	# g - global search in line
@@ -189,33 +199,44 @@ sub subst {
 	# substitutions depend on the modifier
 	# "" means no modifier
 	if ($modi eq "g") {
-		print "subst modifier g\n" if $DEBUG;
 		foreach my $line (@efile) {
 			$noofmatches = $line =~ s/$patt/$repl/g;
+			#for debug
+			print "subst: $line\n" if $DEBUG;
+			
 			# add up matches
 			$count = $count + $noofmatches;
 		}
 	} elsif ($modi eq "i") {
-		print "subst modifier i\n" if $DEBUG;
 		foreach my $line (@efile) {
 			$noofmatches = $line =~ s/$patt/$repl/i;
+			#for debug
+			print "subst: $line\n" if $DEBUG;
+			
 			$count = $count + $noofmatches;
 		}
 	} elsif ($modi =~ /i/ and $modi =~ /g/) {
-		print "subst modifier ig\n"if $DEBUG;
 		foreach my $line (@efile) {
 			$noofmatches = $line =~ s/$patt/$repl/ig;
+			#for debug
+			print "subst: $line\n" if $DEBUG;
+			
 			$count = $count + $noofmatches;
 		}
 
 	} else {
-		print "subst modifier none\n" if $DEBUG;
 		foreach my $line (@efile) {
 			$noofmatches = $line =~ s/$patt/$repl/;
+			#for debug
+			print "subst: $line\n" if $DEBUG;
+			
 			$count = $count + $noofmatches;
 		}
 	}
 
+	# for debug
+	print "$count substitutions\n" if $DEBUG;
+	
 	# return no of matches
 	return $count;
 }

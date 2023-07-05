@@ -4,7 +4,7 @@ use warnings;
 use lib "$ENV{HOME}/stedit";
 use StEdit;
 
-my $addr;
+my $addr = "one\$";
 my $patt = "\/mnt\/ad64\$";
 my $repl = "/mnt/newdirectory";
 my $modi = "";
@@ -15,19 +15,14 @@ print "######### original############\n";
 $eobject->display();
 print "##############################\n";
 
-$count = $eobject->delete($addr, "i");
-print "$count lines deleted\n";
-print "address = " . $addr . "\n";
+$count = $eobject->delete($addr);
 
 $eobject->display();
 print "##############################\n";
 
 $eobject->write();
-exit 0;
 
 $count = $eobject->subst($patt, $repl, $modi);
-print "$count subsitutions made\n";
-print "pattern = " . $patt . "\n";
 
 $eobject->display();
 print "##############################\n";

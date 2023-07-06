@@ -84,22 +84,13 @@ sub delete {
 	# 3 parameters means pattern address and pattern modifier
 	my $pattern;
 	my $modi;
-	if ($count == 2) {
-		$pattern = shift;
-		# no modifier
-		$modi = "";
-	} elsif ($count == 3) {
-		$pattern = shift;
-		$modi = shift;
 
-		# if the modifier is not i
-		# i is for case insensitive
-		# set to "" - no modifier
-		$modi = "" unless $modi eq "i";
-	} else {
-		# incorrect no parameters
-		print "Error : $count parameters passed\n";
-		return -1;
+	# get parameters
+	$_ = $count;
+	SWITCH: {
+		/^2/ && do {$pattern = shift; $modi = ""; last SWITCH;};
+		/^3/ && do {$pattern = shift; $modi = shift; $modi = "" unless $modi eq "i"; last SWITCH;};
+		print "Error: $count parameters passed\n"; return -1;
 	}
 	# debug print parameters
 	# delete all lines that match address
@@ -152,7 +143,9 @@ sub delete {
 }
 
 # sub to subsitute in each line of the file
-# parameters: pattern, replacement, optional modifier i or g or ig or gi
+# parameters: 1. pattern
+#             2. replacement
+#             3, modifier i or g or ig or gi - optional
 # if no modifier given or a bad one, set $modi = "" = no modifier
 # returns no of subsitutions
 sub subst {
@@ -164,26 +157,13 @@ sub subst {
 	my $patt;
 	my $repl;
 	my $modi;
-	if ($count == 4) {
-		# get parameters
-		$patt = shift;
-		$repl = shift;
-		# $modi is defined, check it's validity
-		$modi = shift;
-		# set it to "" if it does not contain i or g or both.
-		# empty is also disqualified
-
-		$modi = "" if $modi !~ /^i$|^g$|^ig$|^gi$/;
-	} elsif ($count == 3) {
-		# get parameters
-		$patt = shift;
-		$repl = shift;
-		# no modifier passed
-		$modi = "";
-	} else {
-		# incorrect no of parameters passed
-		print "Error : $count parameters passed\n";
-		return -1;
+	$_ = $count;
+	
+	# get parameters
+	SWITCH: {
+		/^3/ && do {$patt = shift; $repl = shift; $modi = ""; last SWITCH;};
+		/^4/ && do {$patt = shift; $repl = shift; $modi = shift; $modi = "" unless $modi =~ /^i$|^g$|^ig$|^gi$/; last SWITCH;};
+		print "Error: $count parameters passed\n"; return -1;
 	}
 
 	# for debug
@@ -246,7 +226,32 @@ sub subst {
 	return $count;
 }
 
+# method to append a string to a file
+# or to each line that matches a pattern.
+# parameters: 1 the string to be appended
+#	      2 optinal the pattern to match, no pattern = every line
+#             3 optional modifier i - case insensitive match
+# if modifier given with no pattern is meaningless.
 # method to write file to disk
+sub append {
+	# get parameters
+	my $count = scalar(@_);
+	my $self = shift;
+	my $pattern;
+	my $modi;
+	
+	# set the vars depending on how many parameters were passed
+	$_ = $count;
+	SWITCH: {
+		/^2/ && do { $pattern = shift; $modi = ""; last SWITCH};
+		/^3/ && do { $pattern = shift; $modi = shift; $modi = "" unless $modi eq "i"; last SWITCH};
+		print "Error: $count parameters supplied\n"; return -1;
+	}
+
+	print "count = $count: pattern = $pattern: modi = $modi\n";
+	exit 0;
+}
+	
 sub write {
 	# get parameters
 	my $self = shift;

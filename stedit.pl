@@ -22,7 +22,7 @@ print "##############################\n";
 
 # $eobject->write();
 
-$count = $eobject->subst($patt, $repl, $modi);
+$count = $eobject->subst($patt, $repl, "g");
 
 $eobject->display();
 print "##############################\n";

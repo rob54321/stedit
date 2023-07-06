@@ -183,26 +183,32 @@ sub subst {
 	my $oldline if $DEBUG;
 	if ($modi eq "g") {
 		foreach my $line (@efile) {
+			# for debug
+			$oldline = $line if $DEBUG;
 			$noofmatches = $line =~ s/$patt/$repl/g;
 			#for debug
-			print "subst: $line\n" if $DEBUG and ($noofmatches > 0);
+			print "old line: $oldline\nnewline: $line\n" if $DEBUG and ($noofmatches > 0);
 			
 			# add up matches
 			$count = $count + $noofmatches;
 		}
 	} elsif ($modi eq "i") {
 		foreach my $line (@efile) {
+			# for debug
+			$oldline = $line if $DEBUG;
 			$noofmatches = $line =~ s/$patt/$repl/i;
 			#for debug
-			print "subst: $line\n" if $DEBUG and ($noofmatches > 0);
+			print "old line: $oldline\nnewline: $line\n" if $DEBUG and ($noofmatches > 0);
 			
 			$count = $count + $noofmatches;
 		}
 	} elsif ($modi =~ /i/ and $modi =~ /g/) {
 		foreach my $line (@efile) {
+			# for debug
+			$oldline = $line if $DEBUG;
 			$noofmatches = $line =~ s/$patt/$repl/ig;
 			#for debug
-			print "subst: $line\n" if $DEBUG and ($noofmatches > 0);
+			print "old line: $oldline\nnewline: $line\n" if $DEBUG and ($noofmatches > 0);
 			
 			$count = $count + $noofmatches;
 		}

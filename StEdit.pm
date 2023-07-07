@@ -276,8 +276,47 @@ sub append {
 	return 1;
 }
 
+# sub to insert a line after/before a line
+# parameters: 1. ref to line
+#             2. ref to text
+#             3. ref to temparray
+#             4. modifier a or b
+# return: nothing
+sub insertline {
+	# get parameters
+	my $self = shift;
+	my $rline = shift;
+	my $rtext = shift;
+	my $rtemparray = shift;
+	my $modi = shift;
+
+	# for debug
+	my @debug = ("***Insertline***\n") if $DEBUG;
+	push @debug, "modi = $modi\n: line = ${$rline}\n" if $DEBUG;
+	# insert
+	if ($modi =~ /a/) {
+		# insert text after a line
+		push @{$rtemparray}, ${$rline};
+		push @{$rtemparray}, ${$rtext};
+print "insertline: got a\n";
+		# for debug
+		push @debug, "old: ${$rline}\nnew: ${$rtext}\n" if $DEBUG;
+	} else {
+		# insert before a line - default
+		push @{$rtemparray}, ${$rtext};
+		push @{$rtemparray}, ${$rline};
+print "insertline: not a\n";
+		# for debug
+		push @debug, "new: ${$rtext}\nold: ${$rline}\n" if $DEBUG;
+	}
+	# for debug
+	$self->display(\@debug) if $DEBUG;
+
+	return;
+}
 # method to insert a string(s) in a file
 # after or before a certain line.
+# the default is insert before a line
 # the pattern can have modifiers, i case insensitive
 #                                 b before match
 #                                 a after match
@@ -289,7 +328,7 @@ sub append {
 #      b before match
 #      a after match
 # return: -1 on error
-#          1  on success
+#          count  on success
 #          0  on match not found
 sub insert {
 	# for debug
@@ -301,18 +340,61 @@ sub insert {
 	my $pattern;
 	my $text;
 	my $modi;
+	my @temparray = ();
 	
 	# set the vars depending on how many parameters were passed
 	$_ = $count;
 	SWITCH: {
 		/^3/ && do { $pattern = shift; $text = shift; $modi = ""; last SWITCH};
-		/^4/ && do { $pattern = shift; $text = shift; $modi = "" unless $modi =~ /i|b|a|ib|ia|/; last SWITCH};
+		/^4/ && do { $pattern = shift; $text = shift; $modi = shift; $modi = "" unless $modi =~ /i|b|a|ib|ia|/; last SWITCH};
 		print "insert error: $count parameters supplied\n"; return -1;
 	}
 
 	push @debug, "count = $count: pattern = $pattern: modi = $modi\n" if $DEBUG;
 
 	# insert text before/after case (in) sensitive to each matching line.
+	# for all elements in list
+	# no of insertions
+	$count = 0;
+	foreach my $line (@efile) {
+		# copy each line that does not match to temparray
+		# when line matches insert before/after line in temparray
+		if ($modi =~ /i/) {
+			# check for match
+			if ($line !~ /$pattern/i) {
+				# no match , copy line
+				push @temparray, $line;
+			} else {
+				# line does match.
+				# insert text before or after
+				$self->insertline(\$line, \$text, \@temparray, "i");
+
+				# count insertions
+				$count++;
+			}
+		} else {
+			# no i modifier
+			# check for match
+			if ($line !~ /$pattern/) {
+				# no match , copy line
+				push @temparray, $line;
+			} else {
+				# line does match.
+				# insert text before or after
+				$self->insertline(\$line, \$text, \@temparray, "");
+
+				# count insertions
+				$count++;
+			}
+		}
+	}
+	# copy temp array to efile
+	@efile = @temparray;
+
+	# for debug
+	$self->display(\@debug) if $DEBUG;
+
+	return $count;
 }
 	
 # method to write file to disk

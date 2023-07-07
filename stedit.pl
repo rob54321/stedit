@@ -12,12 +12,14 @@ my $count;
 
 my $eobject = StEdit->new("/home/robert/junk.txt");
 
-$count = $eobject->delete($addr, $modi);
+#$count = $eobject->delete($addr, $modi);
 
 # $eobject->write();
 
-$count = $eobject->subst($patt, $repl, "g");
+#$count = $eobject->subst($patt, $repl, "g");
 
 
 my $text = "second last line\n\tvery last line\n\t===============\n";
-$eobject->append("third\n\tsecond\n\tlast\n");
+#$eobject->append("third\n\tsecond\n\tlast\n");
+
+$eobject->insert("unique\$", "inserted string==============", "a");

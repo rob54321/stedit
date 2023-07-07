@@ -69,9 +69,12 @@ sub new {
 #   "\\bstring\$"
 # parameter: address pattern to match,optional modifier i
 # if not i then it is "" = no modifier
-# if no pattern address is given, return -1
-# return no of lines deleted
+# return: no of lines deleted
+#         -1 on error
 sub delete {
+	# for debug
+	my @debug = ("***Delete***\n") if $DEBUG;
+	
 	# get the no of parameters passed
 	my $count = scalar (@_);
 	
@@ -90,7 +93,7 @@ sub delete {
 	SWITCH: {
 		/^2/ && do {$pattern = shift; $modi = ""; last SWITCH;};
 		/^3/ && do {$pattern = shift; $modi = shift; $modi = "" unless $modi eq "i"; last SWITCH;};
-		print "Error: $count parameters passed\n"; return -1;
+		print "delete error: $count parameters passed\n"; return -1;
 	}
 	# debug print parameters
 	# delete all lines that match address
@@ -104,14 +107,15 @@ sub delete {
 	$count = 0;
 
 	# for debug
-	print "pattern = $pattern ; modifier = $modi\n" if $DEBUG;
+	push @debug, "pattern = $pattern ; modifier = $modi\n" if $DEBUG;
+	
 	# if modifier is i
 	if ($modi eq "i") {
 		foreach my $line (@efile) {
 			# case insensitive pattern
 			if ($line =~ /$pattern/i) {
 				# DEBUG: print the line
-				print "deleted: $line\n" if $DEBUG;
+				push @debug, "deleted: $line\n" if $DEBUG;
 				# delete line and count it
 				$count++;
 			} else {
@@ -124,7 +128,7 @@ sub delete {
 			# case sensitive search
 			if ($line =~ /$pattern/) {
 				# DEBUG: print the line
-				print "deleted: $line\n" if $DEBUG;
+				push @debug, "deleted: $line\n" if $DEBUG;
 				# delete line and count it
 				$count++;
 			} else {
@@ -135,10 +139,13 @@ sub delete {
 	}
 	
 	# for debug
-	print "$count lines deleted\n" if $DEBUG;
+	push @debug, "$count lines deleted\n" if $DEBUG;
 	
 	# set efile to new array
 	@efile = @temparray;
+	# for debug
+	$self->display(\@debug) if $DEBUG;
+
 	return $count;
 }
 
@@ -147,8 +154,12 @@ sub delete {
 #             2. replacement
 #             3, modifier i or g or ig or gi - optional
 # if no modifier given or a bad one, set $modi = "" = no modifier
-# returns no of subsitutions
+# return: no of subsitutions
+#         -1 on error
 sub subst {
+	# for debug
+	my @debug = ("***Subst***\n") if $DEBUG;
+	
 	# no of parameters passed
 	my $count = scalar (@_);
 
@@ -163,11 +174,11 @@ sub subst {
 	SWITCH: {
 		/^3/ && do {$patt = shift; $repl = shift; $modi = ""; last SWITCH;};
 		/^4/ && do {$patt = shift; $repl = shift; $modi = shift; $modi = "" unless $modi =~ /^i$|^g$|^ig$|^gi$/; last SWITCH;};
-		print "Error: $count parameters passed\n"; return -1;
+		print "susbst error: $count parameters passed\n"; return -1;
 	}
 
 	# for debug
-	print "pattern = $patt : replacement = $repl : modifier = $modi\n" if $DEBUG;
+	push @debug, "pattern = $patt : replacement = $repl : modifier = $modi\n" if $DEBUG;
 	
 	# the modifier can be
 	# i - case insensitive
@@ -187,7 +198,7 @@ sub subst {
 			$oldline = $line if $DEBUG;
 			$noofmatches = $line =~ s/$patt/$repl/g;
 			#for debug
-			print "old line: $oldline\nnewline: $line\n" if $DEBUG and ($noofmatches > 0);
+			push @debug, "old: $oldline\nnew: $line\n" if $DEBUG and ($noofmatches > 0);
 			
 			# add up matches
 			$count = $count + $noofmatches;
@@ -198,7 +209,7 @@ sub subst {
 			$oldline = $line if $DEBUG;
 			$noofmatches = $line =~ s/$patt/$repl/i;
 			#for debug
-			print "old line: $oldline\nnewline: $line\n" if $DEBUG and ($noofmatches > 0);
+			push @debug, "old: $oldline\nnew: $line\n" if $DEBUG and ($noofmatches > 0);
 			
 			$count = $count + $noofmatches;
 		}
@@ -208,7 +219,7 @@ sub subst {
 			$oldline = $line if $DEBUG;
 			$noofmatches = $line =~ s/$patt/$repl/ig;
 			#for debug
-			print "old line: $oldline\nnewline: $line\n" if $DEBUG and ($noofmatches > 0);
+			push @debug, "old: $oldline\nnew: $line\n" if $DEBUG and ($noofmatches > 0);
 			
 			$count = $count + $noofmatches;
 		}
@@ -219,45 +230,92 @@ sub subst {
 			$oldline = $line if $DEBUG;
 			$noofmatches = $line =~ s/$patt/$repl/;
 			#for debug
-			print "old line: $oldline\nnewline: $line\n" if $DEBUG and ($noofmatches > 0);
+			push @debug, "old: $oldline\nnew: $line\n" if $DEBUG and ($noofmatches > 0);
 			
 			$count = $count + $noofmatches;
 		}
 	}
 
 	# for debug
-	print "$count substitutions\n" if $DEBUG;
+	push @debug, "$count substitutions\n" if $DEBUG;
+	
+	# for debug
+	$self->display(\@debug) if $DEBUG;
 	
 	# return no of matches
 	return $count;
 }
 
-# method to append a string to a file
-# or to each line that matches a pattern.
+# method to append a string to the end of a file
 # parameters: 1 the string to be appended
-#	      2 optinal the pattern to match, no pattern = every line
-#             3 optional modifier i - case insensitive match
-# if modifier given with no pattern is meaningless.
-# method to write file to disk
+# return: 1 on success
+#         -1 on error
 sub append {
+	# for debug
+	my @debug = ("***Append***\n") if $DEBUG;
+	
+	#get parameters
+	my $count = scalar(@_);
+
+	# for debug
+	push @debug, "no of parameters = $count\n" if $DEBUG;
+	
+	if ($count != 2) {
+		print "append error: $count parameters passed \n";
+		return -1;
+	}
+	my $self = shift;
+	my $text = shift;
+
+	# append the string to the efile array
+	# string can be : something\nnew line\n\tnew line again\n\tetc
+	push @efile, $text;
+	# for debug
+	$self->display(\@debug) if $DEBUG;
+	
+	return 1;
+}
+
+# method to insert a string(s) in a file
+# after or before a certain line.
+# the pattern can have modifiers, i case insensitive
+#                                 b before match
+#                                 a after match
+# parameters
+#   1. pattern to match
+#   2. text to be inserted
+#   3. modifiers 
+#      i for case insensitive
+#      b before match
+#      a after match
+# return: -1 on error
+#          1  on success
+#          0  on match not found
+sub insert {
+	# for debug
+	my @debug = ("***Insert***\n") if $DEBUG;
+	
 	# get parameters
 	my $count = scalar(@_);
 	my $self = shift;
 	my $pattern;
+	my $text;
 	my $modi;
 	
 	# set the vars depending on how many parameters were passed
 	$_ = $count;
 	SWITCH: {
-		/^2/ && do { $pattern = shift; $modi = ""; last SWITCH};
-		/^3/ && do { $pattern = shift; $modi = shift; $modi = "" unless $modi eq "i"; last SWITCH};
-		print "Error: $count parameters supplied\n"; return -1;
+		/^3/ && do { $pattern = shift; $text = shift; $modi = ""; last SWITCH};
+		/^4/ && do { $pattern = shift; $text = shift; $modi = "" unless $modi =~ /i|b|a|ib|ia|/; last SWITCH};
+		print "insert error: $count parameters supplied\n"; return -1;
 	}
 
-	print "count = $count: pattern = $pattern: modi = $modi\n";
-	exit 0;
+	push @debug, "count = $count: pattern = $pattern: modi = $modi\n" if $DEBUG;
+
+	# insert text before/after case (in) sensitive to each matching line.
 }
 	
+# method to write file to disk
 sub write {
 	# get parameters
 	my $self = shift;
@@ -274,9 +332,16 @@ sub write {
 }
 	
 # display the buffer for testing purposes
+# mainly for debugging.
+# parameters: optional title
+# return: nothing
 sub display {
+	my $count = scalar(@_);
 	my $self = shift;
-	
+
+	# if title given print it
+	# a title is a reference to list lines
+	do {my $title = shift; print "###################\n@{$title}\n#################\n";} if $count == 2;
 	foreach my $line (@efile) {
 		print "$line\n";
 	}

@@ -11,21 +11,13 @@ my $modi = "i";
 my $count;
 
 my $eobject = StEdit->new("/home/robert/junk.txt");
-print "######### original############\n";
-$eobject->display();
-print "##############################\n";
 
 $count = $eobject->delete($addr, $modi);
-
-$eobject->display();
-print "##############################\n";
 
 # $eobject->write();
 
 $count = $eobject->subst($patt, $repl, "g");
 
-$eobject->display();
-print "##############################\n";
 
-$eobject->append("/mnt/ad64", "i");
-
+my $text = "second last line\n\tvery last line\n\t===============\n";
+$eobject->append("third\n\tsecond\n\tlast\n");

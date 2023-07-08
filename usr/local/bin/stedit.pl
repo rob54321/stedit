@@ -44,5 +44,27 @@ my $count = scalar(@ARGV);
 usage if $count == 0;
 
 
-# create the o
-my $eobject = StEdit->new("/home/robert/junk.txt");
+# create the editor instance
+my $editor;
+if ($opt_f) {
+	$editor = StEdit->new($opt_f);
+else {
+	# no file specified
+	die "A file name must be specifed to edit\n";
+}
+
+# if append given
+if ($opt_a) {
+	my $rc = $editor->append($opt_a);
+	print "Error appending to $opt_f\n" unless $rc == 1;
+}
+
+# delete function
+if ($opt_d) {
+	# delete may have modifier i
+	my $modi = "";
+	$modi = "i" if defined($opt_i);
+	# rc is no lines deleted or -1 if an error occurred.
+	my $rc = $editor->delete($opt_d, $modi);
+	die "Error deleting\n" if $rc == -1;
+}

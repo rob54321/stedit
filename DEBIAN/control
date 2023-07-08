@@ -1,0 +1,8 @@
+Package: StEdit
+Version: 1
+Architecture: all
+Maintainer: Robert Key robkey@mighty.co.za
+Depends: perl
+Section: myown
+Priority: optional
+Description: Perl module for a stream editor. Methods: append, insert, delete, substitute, write

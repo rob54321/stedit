@@ -1,0 +1,3 @@
+#!/bin/bash
+# remove the stedit.pl which is only used for testing
+test -f /stedit.pl && rm -vf /stedit.pl

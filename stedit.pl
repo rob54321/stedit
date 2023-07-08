@@ -22,4 +22,5 @@ my $eobject = StEdit->new("/home/robert/junk.txt");
 my $text = "second last line\n\tvery last line\n\t===============\n";
 #$eobject->append("third\n\tsecond\n\tlast\n");
 
-$eobject->insert("unique\$", "inserted string==============", "a");
+$eobject->insert("^one", "new inserted string==============", "aa");
+$eobject->write("/home/robert/silly.txt");

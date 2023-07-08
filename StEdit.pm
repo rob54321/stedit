@@ -291,26 +291,24 @@ sub insertline {
 	my $modi = shift;
 
 	# for debug
-	my @debug = ("***Insertline***\n") if $DEBUG;
-	push @debug, "modi = $modi\n: line = ${$rline}\n" if $DEBUG;
+	my @debug = ("###################\n", "***Insertline***\n", "###################\n") if $DEBUG;
+	push @debug, "modi = $modi: line = ${$rline}\n" if $DEBUG;
 	# insert
 	if ($modi =~ /a/) {
 		# insert text after a line
 		push @{$rtemparray}, ${$rline};
 		push @{$rtemparray}, ${$rtext};
-print "insertline: got a\n";
 		# for debug
 		push @debug, "old: ${$rline}\nnew: ${$rtext}\n" if $DEBUG;
 	} else {
 		# insert before a line - default
 		push @{$rtemparray}, ${$rtext};
 		push @{$rtemparray}, ${$rline};
-print "insertline: not a\n";
 		# for debug
 		push @debug, "new: ${$rtext}\nold: ${$rline}\n" if $DEBUG;
 	}
 	# for debug
-	$self->display(\@debug) if $DEBUG;
+	print "@debug" if $DEBUG;
 
 	return;
 }
@@ -346,7 +344,7 @@ sub insert {
 	$_ = $count;
 	SWITCH: {
 		/^3/ && do { $pattern = shift; $text = shift; $modi = ""; last SWITCH};
-		/^4/ && do { $pattern = shift; $text = shift; $modi = shift; $modi = "" unless $modi =~ /i|b|a|ib|ia|/; last SWITCH};
+		/^4/ && do { $pattern = shift; $text = shift; $modi = shift; $modi = "" unless $modi =~ /^i$|^b$|^a$|^ib$|^bi$|^ia$|^ai$/; last SWITCH};
 		print "insert error: $count parameters supplied\n"; return -1;
 	}
 
@@ -367,7 +365,7 @@ sub insert {
 			} else {
 				# line does match.
 				# insert text before or after
-				$self->insertline(\$line, \$text, \@temparray, "i");
+				$self->insertline(\$line, \$text, \@temparray, $modi);
 
 				# count insertions
 				$count++;
@@ -381,7 +379,7 @@ sub insert {
 			} else {
 				# line does match.
 				# insert text before or after
-				$self->insertline(\$line, \$text, \@temparray, "");
+				$self->insertline(\$line, \$text, \@temparray, $modi);
 
 				# count insertions
 				$count++;
@@ -392,18 +390,27 @@ sub insert {
 	@efile = @temparray;
 
 	# for debug
+	push @debug, "$count times inserted\n" if $DEBUG;
 	$self->display(\@debug) if $DEBUG;
 
 	return $count;
 }
 	
 # method to write file to disk
+# parameters: optional file name will be written to if given
+# return: nothing
 sub write {
+	my $count = scalar(@_);
+	
 	# get parameters
 	my $self = shift;
 
+	# if file name given , write to it instead
+	my $filewrite = $fname;
+	$filewrite = shift if $count == 2;
+	
 	# write the efile to disk
-	open (my $fh, ">", $fname) or die "Could not open $fname for writing: $!\n";
+	open (my $fh, ">", $filewrite) or die "Could not open $fname for writing: $!\n";
 
 	foreach my $line (@efile) {
 		print $fh "$line\n";
@@ -423,7 +430,7 @@ sub display {
 
 	# if title given print it
 	# a title is a reference to list lines
-	do {my $title = shift; print "###################\n@{$title}\n#################\n";} if $count == 2;
+	do {my $title = shift; print "###################\n@{$title}\n###################\n";} if $count == 2;
 	foreach my $line (@efile) {
 		print "$line\n";
 	}

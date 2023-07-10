@@ -5,6 +5,10 @@
 # arguments to this script which then calls
 # StEdit.pm methods
 
+# use bash ANSI-C quoting when interpolation of \n \r etc are required
+# stedit.pl -a $'oneline\nlast line\n'
+# format is $'...'
+
 use strict;
 use warnings;
 use StEdit;
@@ -14,8 +18,9 @@ our ($opt_a, $opt_b, $opt_d, $opt_f, $opt_g, $opt_i, $opt_h, $opt_p, $opt_z);
 
 # usage function
 sub usage {
+	print "use ANSI-C quoting \$'...' for interpolation of \\n etc in text arguments\n";
 	print "stedit -f \"full pathname\" commands options\n";
-	print "-a (append) \"text to append\"\n";
+	print "-a (append) \"text to append\" \n";
 	print "-d (delete) \"pattern\" option -i case insensitive\n";
 	print "-i (insert) \"text to insert\" option -p \"pattern\" -b (before- default) -z after -i case insensitive\n";
 	print "-s (subst)  \"text to replace\" option -r \"replacement\" -i case insensitive -g global\n";
@@ -39,7 +44,16 @@ sub usage {
 
 # check at least some arguments were given
 my $count = scalar(@ARGV);
+# for debugging
+my $DEBUG = 1;
 
+do {
+	foreach my $arg (@ARGV) {
+		print "param: " . $arg . ":\n";
+	}
+} if $DEBUG;
+
+getopts ("a:bd:f:ghip:s:w:z");
 # invoke usage if no arguments given
 usage if $count == 0;
 
@@ -48,12 +62,15 @@ usage if $count == 0;
 my $editor;
 if ($opt_f) {
 	$editor = StEdit->new($opt_f);
-else {
+} else {
 	# no file specified
 	die "A file name must be specifed to edit\n";
 }
 
 # if append given
+# note: if the string contains \n characters
+# the bash ansi-c quoting $'...' must be used: eg. -a $'string\nnext line'
+# must be used
 if ($opt_a) {
 	my $rc = $editor->append($opt_a);
 	print "Error appending to $opt_f\n" unless $rc == 1;

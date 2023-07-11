@@ -59,8 +59,8 @@ sub new {
 }
 
 # delete function
-# delete each line matching the address
-# or if no address, delete all lines
+# delete each line matching the pattern
+# if no pattern is given return an error
 # addr is of form:
 #   "^string"
 #   "string\$"
@@ -70,7 +70,7 @@ sub new {
 # parameter: address pattern to match,optional modifier i
 # if not i then it is "" = no modifier
 # return: no of lines deleted
-#         -1 on error
+#         undefined on error
 sub delete {
 	# for debug
 	my @debug = ("***Delete***\n") if $DEBUG;
@@ -93,7 +93,7 @@ sub delete {
 	SWITCH: {
 		/^2/ && do {$pattern = shift; $modi = ""; last SWITCH;};
 		/^3/ && do {$pattern = shift; $modi = shift; $modi = "" unless $modi eq "i"; last SWITCH;};
-		print "delete error: $count parameters passed\n"; return -1;
+		print "delete error: $count parameters passed\n"; return;
 	}
 	# debug print parameters
 	# delete all lines that match address
@@ -155,7 +155,7 @@ sub delete {
 #             3, modifier i or g or ig or gi - optional
 # if no modifier given or a bad one, set $modi = "" = no modifier
 # return: no of subsitutions
-#         -1 on error
+#         undefined on error
 sub subst {
 	# for debug
 	my @debug = ("***Subst***\n") if $DEBUG;
@@ -174,7 +174,7 @@ sub subst {
 	SWITCH: {
 		/^3/ && do {$patt = shift; $repl = shift; $modi = ""; last SWITCH;};
 		/^4/ && do {$patt = shift; $repl = shift; $modi = shift; $modi = "" unless $modi =~ /^i$|^g$|^ig$|^gi$/; last SWITCH;};
-		print "susbst error: $count parameters passed\n"; return -1;
+		print "susbst error: $count parameters passed\n"; return;
 	}
 
 	# for debug
@@ -249,7 +249,7 @@ sub subst {
 # method to append a string to the end of a file
 # parameters: 1 the string to be appended
 # return: 1 on success
-#         -1 on error
+#         undefined on error
 sub append {
 	# for debug
 	my @debug = ("***Append***\n") if $DEBUG;
@@ -262,7 +262,7 @@ sub append {
 	
 	if ($count != 2) {
 		print "append error: $count parameters passed \n";
-		return -1;
+		return;
 	}
 	my $self = shift;
 	my $text = shift;
@@ -325,7 +325,7 @@ sub insertline {
 #      i for case insensitive
 #      b before match
 #      a after match
-# return: -1 on error
+# return: undefined on error
 #          count  on success
 #          0  on match not found
 sub insert {
@@ -345,7 +345,7 @@ sub insert {
 	SWITCH: {
 		/^3/ && do { $pattern = shift; $text = shift; $modi = ""; last SWITCH};
 		/^4/ && do { $pattern = shift; $text = shift; $modi = shift; $modi = "" unless $modi =~ /^i$|^b$|^a$|^ib$|^bi$|^ia$|^ai$/; last SWITCH};
-		print "insert error: $count parameters supplied\n"; return -1;
+		print "insert error: $count parameters supplied\n"; return;
 	}
 
 	push @debug, "count = $count: pattern = $pattern: modi = $modi\n" if $DEBUG;

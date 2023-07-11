@@ -44,6 +44,10 @@ sub usage {
 
 # check at least some arguments were given
 my $count = scalar(@ARGV);
+
+# invoke usage if no arguments given
+usage if $count == 0;
+
 # for debugging
 my $DEBUG = 1;
 
@@ -54,9 +58,11 @@ do {
 } if $DEBUG;
 
 getopts ("a:bd:f:ghI:is:t:w:z");
-# invoke usage if no arguments given
-usage if $count == 0;
 
+# usage
+if ($opt_h) {
+	usage;
+}
 
 # create the editor instance
 my $editor;
@@ -104,7 +110,7 @@ if ($opt_a) {
 # parameters passed: pattern, text, optional modifiers
 if ($opt_I) {
 	# error if no text given
-	die "Error: no text to insert given\n" unless $opt_t;
+	die "Insert error: no pattern/text given\n" unless $opt_t;
 
 	# check which modifiers given
 	my $modi = "";
@@ -127,5 +133,26 @@ if ($opt_I) {
 		} else {
 			print "Error: inserting\n";
 		}
+	}
+}
+
+# substitute a pattern with replacement text
+# parameters passed: pattern, text replacement, optional modifiers -i -g
+if ($opt_s) {
+	# error if no text replacement
+	die "Error: no text replacement given\n" unless $opt_t;
+
+	# check which modifiers given
+	my $modi = "";
+	$modi = "i" if defined($opt_i);
+	$modi = $modi . "g" if defined($opt_g);
+	print "modifier = $modi\n" if $DEBUG;
+
+	# do the substitution
+	my $count = $editor->subst($opt_s, $opt_t, $modi);
+	if (defined($count)) {
+		print "$count substitutions done\n" if $DEBUG;
+	} else {
+		print "Error: substituting\n";
 	}
 }

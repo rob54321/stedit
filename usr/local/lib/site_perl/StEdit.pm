@@ -405,10 +405,13 @@ sub write {
 	# get parameters
 	my $self = shift;
 
-	# if file name given , write to it instead
+	# if 2 parameters were passed
+	# if file name was "" then
+	# use original name $fname
 	my $filewrite = $fname;
-	$filewrite = shift if $count == 2;
-	
+	$filewrite = shift if $count == 2 and $_[0] ne "";
+	print "filename: $filewrite\n" if $DEBUG;
+
 	# write the efile to disk
 	open (my $fh, ">", $filewrite) or die "Could not open $fname for writing: $!\n";
 

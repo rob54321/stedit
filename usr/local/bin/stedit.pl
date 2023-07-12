@@ -29,6 +29,68 @@ sub usage {
 	exit 0;
 }
 
+# this sub operates on the list @ARGV
+# all the switches in the defparam hash are checked to see if they have arguments.
+# if they do not have arguments, the default arguments are inserted into ARGV after the switch
+# so that getopts will not fail.
+# no parameters are passed and none are returned.
+
+sub defaultparameter {
+
+	# the pubkey secretkey files have defaults:
+	#    debianroot/pubkey and debianroot/secretkey
+	# the debian root may have changed in the comman line switches with the -x option
+	# command line: bdt.pl -x newdir ...
+	# then the defaults for pubkey and secretkey must change as well
+	# find -x directory in @ARGV if it exists
+	# the following parameter will be debianroot
+	# if the last command line parameter is -x , it has no effect
+	# that's why $i < $#ARGV
+	for (my $i = 0; $i < $#ARGV; $i++) {
+		if ($ARGV[$i] eq "-x") {
+			# reset the pubkey and secret key locations
+			$debianroot = $ARGV[$i+1];
+			# check and remove final / from debianroot
+			$debianroot =~ s/\/$//;
+			$pubkeyfile = $debianroot . "/" . $debhomepub;
+			$secretkeyfile = $debianroot . "/" . $debhomesec;
+			last;
+		}
+	}
+
+	# hash supplying default arguments to switches
+	my %defparam = ( -b => $pubkeyfile . " " . $secretkeyfile,
+			  -k => $pubkeyfile,
+			  -K => $secretkeyfile);
+
+	# for each switch in the defparam hash find it's index and insert default arguments if necessary
+	foreach my $switch (keys(%defparam)) {
+		# find index of position of -*
+		my $i = 0;
+		foreach my $param (@ARGV) {
+			# check for a -b, -K or -k and that it is not the last parameter
+			if ($param eq $switch) {
+				if ($i < $#ARGV) {
+					# -* has been found at $ARGV[$i] and it is not the last parameter
+					# if the next parameter is a switch -something
+					# then -* has no arguments
+					# check if next parameter is a switch
+					if ($ARGV[$i+1] =~ /^-/) {
+						# -* is followed by a switch and is not the last switch
+						# insert the 2 default filenames as a string at index $i+1
+						splice @ARGV, $i+1, 0, $defparam{$switch};
+					}
+				} else {
+					# -* is the last index then the default parameters for -b must be appended
+					splice @ARGV, $i+1, 0, $defparam{$switch}; 
+				}
+			}
+			# increment index counter
+			$i++;
+		}
+	}
+} 
+
 ###################################################
 ########### main entry
 ###################################################
@@ -156,3 +218,6 @@ if ($opt_s) {
 		print "Error: substituting\n";
 	}
 }
+
+# write the file to disk
+

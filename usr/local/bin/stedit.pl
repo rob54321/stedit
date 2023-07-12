@@ -11,6 +11,7 @@
 
 use strict;
 use warnings;
+use lib "/mnt/ad64/stedit/usr/local/lib/site_perl";
 use StEdit;
 use Getopt::Std;
 
@@ -28,47 +29,28 @@ sub usage {
 	print "-h (help)\n";
 	exit 0;
 }
-
 # this sub operates on the list @ARGV
-# all the switches in the defparam hash are checked to see if they have arguments.
-# if they do not have arguments, the default arguments are inserted into ARGV after the switch
+# all the switches in the ARGV list are checked to see if they have arguments
+# if they do not have arguments, the default arguments are inserted into ARGV
 # so that getopts will not fail.
 # no parameters are passed and none are returned.
 
 sub defaultparameter {
 
-	# the pubkey secretkey files have defaults:
-	#    debianroot/pubkey and debianroot/secretkey
-	# the debian root may have changed in the comman line switches with the -x option
-	# command line: bdt.pl -x newdir ...
-	# then the defaults for pubkey and secretkey must change as well
-	# find -x directory in @ARGV if it exists
-	# the following parameter will be debianroot
-	# if the last command line parameter is -x , it has no effect
-	# that's why $i < $#ARGV
-	for (my $i = 0; $i < $#ARGV; $i++) {
-		if ($ARGV[$i] eq "-x") {
-			# reset the pubkey and secret key locations
-			$debianroot = $ARGV[$i+1];
-			# check and remove final / from debianroot
-			$debianroot =~ s/\/$//;
-			$pubkeyfile = $debianroot . "/" . $debhomepub;
-			$secretkeyfile = $debianroot . "/" . $debhomesec;
-			last;
-		}
-	}
-
 	# hash supplying default arguments to switches
-	my %defparam = ( -b => $pubkeyfile . " " . $secretkeyfile,
-			  -k => $pubkeyfile,
-			  -K => $secretkeyfile);
+	# -b is for mounting bit locker drives
+	# -v is for mounting vera containers
+	# -u is for unmounting any drive
+	# the default argument, if not given on the command line is all drives
+	# the parameter "" cannot be used hence " " is used to indicate there is no filename
+	my %defparam = ( -w => "");
 
 	# for each switch in the defparam hash find it's index and insert default arguments if necessary
 	foreach my $switch (keys(%defparam)) {
 		# find index of position of -*
 		my $i = 0;
 		foreach my $param (@ARGV) {
-			# check for a -b, -K or -k and that it is not the last parameter
+			# check for a -b and that it is not the last parameter
 			if ($param eq $switch) {
 				if ($i < $#ARGV) {
 					# -* has been found at $ARGV[$i] and it is not the last parameter
@@ -78,11 +60,13 @@ sub defaultparameter {
 					if ($ARGV[$i+1] =~ /^-/) {
 						# -* is followed by a switch and is not the last switch
 						# insert the 2 default filenames as a string at index $i+1
-						splice @ARGV, $i+1, 0, $defparam{$switch};
+						my $index = $i + 1;
+						splice @ARGV, $index, 0, $defparam{$switch};
 					}
 				} else {
-					# -* is the last index then the default parameters for -b must be appended
-					splice @ARGV, $i+1, 0, $defparam{$switch}; 
+					# the switch is the last in the list so def arguments must be appended
+					my $index = $i + 1;
+					splice @ARGV, $index, 0, $defparam{$switch}; 
 				}
 			}
 			# increment index counter
@@ -113,13 +97,24 @@ usage if $count == 0;
 # for debugging
 my $DEBUG = 1;
 
+# get default parameter for -w if none was given
+defaultparameter;
+
+# for debugging
 do {
 	foreach my $arg (@ARGV) {
 		print "param: " . $arg . ":\n";
 	}
 } if $DEBUG;
-
+# set default parameter for 
 getopts ("a:bd:f:ghI:is:t:w:z");
+
+# for debugging
+do {
+	foreach my $arg (@ARGV) {
+		print "param: " . $arg . ":\n";
+	}
+} if $DEBUG;
 
 # usage
 if ($opt_h) {
@@ -220,4 +215,11 @@ if ($opt_s) {
 }
 
 # write the file to disk
-
+# a file name may be "" whicn means the original file must be writtern to.
+if ($opt_w or $opt_w eq "") {
+	# write the file to disk
+	# if no filename provided the default parameter is ""
+	# which means 
+	print "write filename: $opt_w\n" if $DEBUG;
+	$editor->write($opt_w);
+}	

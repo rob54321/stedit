@@ -409,6 +409,10 @@ sub write {
 	# if file name was "" then
 	# use original name $fname
 	my $filewrite = $fname;
+
+	# for stedit.pl if -w takes no argument " " is used
+	# as a default parameter. "" does not work
+	# with getopts from Getopt::Std
 	$filewrite = shift if $count == 2 and $_[0] ne "";
 	print "filename: $filewrite\n" if $DEBUG;
 

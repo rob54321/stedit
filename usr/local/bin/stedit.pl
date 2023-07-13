@@ -15,7 +15,7 @@ use lib "/mnt/ad64/stedit/usr/local/lib/site_perl";
 use StEdit;
 use Getopt::Std;
 
-our ($opt_a, $opt_b, $opt_d, $opt_f, $opt_g, $opt_h, $opt_I, $opt_i, $opt_s, $opt_t, $opt_w, $opt_z);
+our ($opt_a, $opt_b, $opt_D, $opt_d, $opt_f, $opt_g, $opt_h, $opt_I, $opt_i, $opt_s, $opt_t, $opt_w, $opt_z);
 
 # usage function
 sub usage {
@@ -26,6 +26,7 @@ sub usage {
 	print "-I (insert) \"pattern\" option -t \"text\" -b (before: default) -z after: -i case insensitive\n";
 	print "-s (subst)  \"pattern\" option -r \"replacement\" -i case insensitive -g global\n";
 	print "-w (write)  \"new filename\"\n";
+	print "-D (display)\n";
 	print "-h (help)\n";
 	exit 0;
 }
@@ -107,7 +108,7 @@ do {
 	}
 } if $DEBUG;
 # set default parameter for 
-getopts ("a:bd:f:ghI:is:t:w:z");
+getopts ("a:bDd:f:ghI:is:t:w:z");
 
 # for debugging
 do {
@@ -127,7 +128,7 @@ if ($opt_f) {
 	$editor = StEdit->new($opt_f);
 } else {
 	# no file specified
-	die "A file name must be specifed to edit\n";
+	die "stedit: A file name must be specifed to edit\n";
 }
 
 # delete function
@@ -142,9 +143,9 @@ if ($opt_d) {
 	# rc is no lines deleted or undefined if an error occurred.
 	my $count = $editor->delete($opt_d, $modi);
 	if (defined($count)) {
-		print "$count lines deleted\n" if $DEBUG;
+		print "stedit: $count lines deleted\n" if $DEBUG;
 	} else {
-		print "Error deleting\n";
+		print "stedit: Error deleting\n";
 	}
 }
 
@@ -156,18 +157,18 @@ if ($opt_d) {
 # no modifiers work with append
 if ($opt_a) {
 	my $rc = $editor->append($opt_a);
-	print "Error appending to $opt_f\n" unless defined($rc);
+	print "stedit: Error appending to $opt_f\n" unless defined($rc);
 }
 
 # insert function
 # text can be inserted before (default) or after each line
 # where the pattern matches.
 # also the pattern can be case (in)sensitive 
-# modifiers -i case insensitive, -a insert after, -b insert before - default, work
+# stedit.pl modifiers -i case insensitive, -a insert after, -b insert before - default, work
 # parameters passed: pattern, text, optional modifiers
 if ($opt_I) {
 	# error if no text given
-	die "Insert error: no pattern/text given\n" unless $opt_t;
+	die "stedit: Insert error: no pattern/text given\n" unless $opt_t;
 
 	# check which modifiers given
 	my $modi = "";
@@ -175,21 +176,15 @@ if ($opt_I) {
 	$modi = $modi . "b" if defined($opt_b);
 	$modi = $modi . "i" if defined($opt_i);
 
-	# a and b are mutually exclusive
-	# print an error and do nothing
-	if ($modi =~ /ab/) {
-		 print "Error: -z (after) and -b (before) are mutually exclusive\n";
+	# print $modi
+	print "stedit: modifier = $modi\n" if $DEBUG;
+
+	# do insert, return from method is no of insertions
+	my $count = $editor->insert($opt_I, $opt_t, $modi);	
+	if (defined($count)) {
+		print "stedit: $count insertions\n" if $DEBUG;
 	} else {
-		# print $modi
-		print "modifier = $modi\n" if $DEBUG;
-	
-		# do insert, return from method is no of insertions
-		my $count = $editor->insert($opt_I, $opt_t, $modi);	
-		if (defined($count)) {
-			print "$count insertions\n" if $DEBUG;
-		} else {
-			print "Error: inserting\n";
-		}
+		print "stedit: Error: inserting\n";
 	}
 }
 
@@ -197,29 +192,39 @@ if ($opt_I) {
 # parameters passed: pattern, text replacement, optional modifiers -i -g
 if ($opt_s) {
 	# error if no text replacement
-	die "Error: no text replacement given\n" unless $opt_t;
+	die "stedit: Error: no text replacement given\n" unless $opt_t;
 
 	# check which modifiers given
 	my $modi = "";
 	$modi = "i" if defined($opt_i);
 	$modi = $modi . "g" if defined($opt_g);
-	print "modifier = $modi\n" if $DEBUG;
+	print "stedit: modifier = $modi\n" if $DEBUG;
 
 	# do the substitution
 	my $count = $editor->subst($opt_s, $opt_t, $modi);
 	if (defined($count)) {
-		print "$count substitutions done\n" if $DEBUG;
+		print "stedit: $count substitutions done\n" if $DEBUG;
 	} else {
-		print "Error: substituting\n";
+		print "stedit: Error: substituting\n";
 	}
 }
 
 # write the file to disk
 # a file name may be "" whicn means the original file must be writtern to.
-if ($opt_w or $opt_w eq "") {
+if (defined($opt_w)) {
 	# write the file to disk
 	# if no filename provided the default parameter is ""
-	# which means 
-	print "write filename: $opt_w\n" if $DEBUG;
+	# which means use original file 
+	print "stedit: write filename: $opt_w\n" if $DEBUG;
 	$editor->write($opt_w);
 }	
+
+# display the file
+# no title can be given
+# StEdit.pm uses a title for debugging purposes only
+if (defined($opt_D)) {
+	# display the file
+	# "" is the default parameter for -D switch
+	# and means no title
+	$editor->display();
+}

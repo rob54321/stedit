@@ -341,11 +341,17 @@ sub insert {
 	my @temparray = ();
 	
 	# set the vars depending on how many parameters were passed
+	# the modifier can be i a b. any combination of ab is invalid
+	# and returned on error.
 	$_ = $count;
 	SWITCH: {
 		/^3/ && do { $pattern = shift; $text = shift; $modi = ""; last SWITCH};
-		/^4/ && do { $pattern = shift; $text = shift; $modi = shift; $modi = "" unless $modi =~ /^i$|^b$|^a$|^ib$|^bi$|^ia$|^ai$/; last SWITCH};
-		print "insert error: $count parameters supplied\n"; return;
+
+		/^4/ && do { $pattern = shift; $text = shift; $modi = shift;
+				# if modi contains ab return undef
+				if ($modi =~ /a.*b|b.*a/) {print "Insert error: ab invalid combination\n"; return}
+				$modi = "" unless $modi =~ /^i$|^b$|^a$|^ib$|^bi$|^ia$|^ai$/; last SWITCH;
+				print "insert error: $count parameters supplied\n"; return;};
 	}
 
 	push @debug, "count = $count: pattern = $pattern: modi = $modi\n" if $DEBUG;
@@ -410,9 +416,9 @@ sub write {
 	# use original name $fname
 	my $filewrite = $fname;
 
-	# for stedit.pl if -w takes no argument " " is used
-	# as a default parameter. "" does not work
-	# with getopts from Getopt::Std
+	# for stedit.pl if -w has no argument "" is used
+	# as a default parameter. -w must have a parameter
+	# for getopts to work
 	$filewrite = shift if $count == 2 and $_[0] ne "";
 	print "filename: $filewrite\n" if $DEBUG;
 
@@ -435,9 +441,11 @@ sub display {
 	my $count = scalar(@_);
 	my $self = shift;
 
-	# if title given print it
-	# a title is a reference to list lines
-	do {my $title = shift; print "###################\n@{$title}\n###################\n";} if $count == 2;
+	# if debugging is on a title can be printed
+	# the title is a reference to a list of lines to be printed
+	# a title is a reference to list lines used for debugging
+	# "" is the default parameter for stedit.pl and must be ignored
+	do {my $title = shift; print "###################\n@{$title}\n###################\n";} if $count == 2 and $DEBUG == 1;
 	foreach my $line (@efile) {
 		print "$line\n";
 	}

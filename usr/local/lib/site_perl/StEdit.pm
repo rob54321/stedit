@@ -37,11 +37,8 @@ sub new {
 	# get file name
 	$fname = shift;
 	
-	# make a backup copy to fname.bak
-	copy($fname, $fname . ".bak") or die "Could not copy $fname to $fname.bak : $!\n" unless -f $fname . ".bak";
-
 	#open file for reading
-	open (my $fh, "<", $fname) or die "Could not open $fname: $!\n";
+	open (my $fh, "<", $fname) or die "new: Could not open $fname: $!\n";
 	# read all lines
 	while (my $line = <$fh>) {
 		# remove terminator at end
@@ -53,6 +50,9 @@ sub new {
 	# close file
 	close $fh;
 		
+	# make a backup copy to fname.bak
+	copy($fname, $fname . ".bak") or die "new: Could not copy $fname to $fname.bak : $!\n" unless -f $fname . ".bak";
+
 	my $self = {};
 	bless $self, $class;
 	return $self;

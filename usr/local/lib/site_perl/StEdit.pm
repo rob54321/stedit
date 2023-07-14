@@ -28,7 +28,7 @@ my @efile = ();
 # the file is copied to filename.bak
 # filename.bak is overwritten if it exists.
 # parameters: 1. file name to be edited
-#             2. DEBUG FLAG 1 - debugging on, 0 - debugging off
+#             2. optional DEBUG FLAG 1 - debugging on, 0 - debugging off
 # the file is read line by line into an array, 
 # a class variable.
 # die if the file cannot be opened for reading
@@ -37,10 +37,10 @@ sub new {
 	# get no of parameters
 	my $count = scalar(@_);
 	my $class = shift;
-	die "new: error in no of parameters. $count passed\n" if $count != 3;
 	# get file name
 	$fname = shift;
-	$DEBUG = shift;
+	# get DEBUG flag if it is passed
+	$DEBUG = shift if $count == 3;;
 	
 	#open file for reading
 	open (my $fh, "<", $fname) or die "new: Could not open $fname: $!\n";

@@ -11,7 +11,7 @@
 
 use strict;
 use warnings;
-use lib "/mnt/ad64/stedit/usr/local/lib/site_perl";
+# use lib "/mnt/ad64/stedit/usr/local/lib/site_perl";
 use StEdit;
 use Getopt::Std;
 

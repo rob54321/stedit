@@ -16,7 +16,7 @@ use warnings;
 use File::Copy;
 
 # DEBUG FLAG, true for debugging or else false
-my $DEBUG = 1;
+my $DEBUG = 0;
 
 # file name
 my $fname;
@@ -27,15 +27,20 @@ my @efile = ();
 # constructor.
 # the file is copied to filename.bak
 # filename.bak is overwritten if it exists.
-# parameter is the name of the file to edit
+# parameters: 1. file name to be edited
+#             2. DEBUG FLAG 1 - debugging on, 0 - debugging off
 # the file is read line by line into an array, 
 # a class variable.
 # die if the file cannot be opened for reading
 
 sub new {
+	# get no of parameters
+	my $count = scalar(@_);
 	my $class = shift;
+	die "new: error in no of parameters. $count passed\n" if $count != 3;
 	# get file name
 	$fname = shift;
+	$DEBUG = shift;
 	
 	#open file for reading
 	open (my $fh, "<", $fname) or die "new: Could not open $fname: $!\n";
@@ -144,7 +149,7 @@ sub delete {
 	# set efile to new array
 	@efile = @temparray;
 	# for debug
-	$self->display(\@debug) if $DEBUG;
+	print "@debug#############\n" if $DEBUG;
 
 	return $count;
 }
@@ -240,7 +245,7 @@ sub subst {
 	push @debug, "$count substitutions\n" if $DEBUG;
 	
 	# for debug
-	$self->display(\@debug) if $DEBUG;
+	print "@debug#############\n" if $DEBUG;
 	
 	# return no of matches
 	return $count;
@@ -271,7 +276,7 @@ sub append {
 	# string can be : something\nnew line\n\tnew line again\n\tetc
 	push @efile, $text;
 	# for debug
-	$self->display(\@debug) if $DEBUG;
+	print "@debug#############\n" if $DEBUG;
 	
 	return 1;
 }
@@ -291,7 +296,7 @@ sub insertline {
 	my $modi = shift;
 
 	# for debug
-	my @debug = ("###################\n", "***Insertline***\n", "###################\n") if $DEBUG;
+	my @debug = ("***Insertline***\n") if $DEBUG;
 	push @debug, "modi = $modi: line = ${$rline}\n" if $DEBUG;
 	# insert
 	if ($modi =~ /a/) {
@@ -308,7 +313,7 @@ sub insertline {
 		push @debug, "new: ${$rtext}\nold: ${$rline}\n" if $DEBUG;
 	}
 	# for debug
-	print "@debug" if $DEBUG;
+	print "@debug############\n" if $DEBUG;
 
 	return;
 }
@@ -397,7 +402,7 @@ sub insert {
 
 	# for debug
 	push @debug, "$count times inserted\n" if $DEBUG;
-	$self->display(\@debug) if $DEBUG;
+	print "@debug#############\n" if $DEBUG;
 
 	return $count;
 }
@@ -435,17 +440,11 @@ sub write {
 	
 # display the buffer for testing purposes
 # mainly for debugging.
-# parameters: optional title
 # return: nothing
 sub display {
-	my $count = scalar(@_);
 	my $self = shift;
 
-	# if debugging is on a title can be printed
-	# the title is a reference to a list of lines to be printed
-	# a title is a reference to list lines used for debugging
-	# "" is the default parameter for stedit.pl and must be ignored
-	do {my $title = shift; print "###################\n@{$title}\n###################\n";} if $count == 2 and $DEBUG == 1;
+	# print each line
 	foreach my $line (@efile) {
 		print "$line\n";
 	}

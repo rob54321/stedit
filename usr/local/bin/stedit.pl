@@ -15,7 +15,7 @@ use lib "/mnt/ad64/stedit/usr/local/lib/site_perl";
 use StEdit;
 use Getopt::Std;
 
-our ($opt_a, $opt_b, $opt_D, $opt_d, $opt_f, $opt_g, $opt_h, $opt_I, $opt_i, $opt_s, $opt_t, $opt_w, $opt_z);
+our ($opt_a, $opt_b, $opt_D, $opt_d, $opt_f, $opt_g, $opt_h, $opt_I, $opt_i, $opt_l, $opt_s, $opt_t, $opt_w, $opt_z);
 
 # usage function
 sub usage {
@@ -26,7 +26,8 @@ sub usage {
 	print "-I (insert) \"pattern\" option -t \"text\" -b (before: default) -z after: -i case insensitive\n";
 	print "-s (subst)  \"pattern\" option -r \"replacement\" -i case insensitive -g global\n";
 	print "-w (write)  \"new filename\"\n";
-	print "-D (display)\n";
+	print "-l (list file)\n";
+	print "-D (turn debugging on)\n";
 	print "-h (help)\n";
 	exit 0;
 }
@@ -87,6 +88,7 @@ sub defaultparameter {
 #             -I  (insert): "pattern"        options: -t "text" -b before(default), -z after, -i case insensitive
 #             -s  (subst) : "pattern"        options: -r "replacement" -i case insensitive, -g global
 #             -w  (write) : "new file name"
+#             -l  (list)  : 
 #             -h  (help)
 
 # check at least some arguments were given
@@ -96,25 +98,30 @@ my $count = scalar(@ARGV);
 usage if $count == 0;
 
 # for debugging
-my $DEBUG = 1;
+my $DEBUG = 0;
 
 # get default parameter for -w if none was given
 defaultparameter;
 
-# for debugging
-do {
-	foreach my $arg (@ARGV) {
-		print "param: " . $arg . ":\n";
-	}
-} if $DEBUG;
+# getopts deletes ARGV, so save
+# so it can be used for debugging
+my @ORIGARGV = @ARGV;
+
 # set default parameter for 
-getopts ("a:bDd:f:ghI:is:t:w:z");
+getopts ("a:bDd:f:ghI:ils:t:w:z");
+
+# if -D is given turn on debugging
+if ($opt_D) {
+	$DEBUG = 1;
+}
 
 # for debugging
 do {
-	foreach my $arg (@ARGV) {
+	print "no of arguments " . scalar(@ORIGARGV) . "\n";
+	foreach my $arg (@ORIGARGV) {
 		print "param: " . $arg . ":\n";
 	}
+	print "#################\n";
 } if $DEBUG;
 
 # usage
@@ -125,7 +132,9 @@ if ($opt_h) {
 # create the editor instance
 my $editor;
 if ($opt_f) {
-	$editor = StEdit->new($opt_f);
+	# turn on debugging in StEdit.pm
+	# pass $DEBUG flag to new
+	$editor = StEdit->new($opt_f, $DEBUG);
 } else {
 	# no file specified
 	die "stedit: A file name must be specifed to edit\n";
@@ -142,11 +151,7 @@ if ($opt_d) {
 	$modi = "i" if defined($opt_i);
 	# rc is no lines deleted or undefined if an error occurred.
 	my $count = $editor->delete($opt_d, $modi);
-	if (defined($count)) {
-		print "stedit: $count lines deleted\n" if $DEBUG;
-	} else {
-		print "stedit: Error deleting\n";
-	}
+	print "stedit: Error deleting\n" unless defined($count);
 }
 
 # if append given
@@ -176,16 +181,9 @@ if ($opt_I) {
 	$modi = $modi . "b" if defined($opt_b);
 	$modi = $modi . "i" if defined($opt_i);
 
-	# print $modi
-	print "stedit: modifier = $modi\n" if $DEBUG;
-
 	# do insert, return from method is no of insertions
 	my $count = $editor->insert($opt_I, $opt_t, $modi);	
-	if (defined($count)) {
-		print "stedit: $count insertions\n" if $DEBUG;
-	} else {
-		print "stedit: Error: inserting\n";
-	}
+	print "stedit: Error: inserting\n" unless defined($count);
 }
 
 # substitute a pattern with replacement text
@@ -198,15 +196,10 @@ if ($opt_s) {
 	my $modi = "";
 	$modi = "i" if defined($opt_i);
 	$modi = $modi . "g" if defined($opt_g);
-	print "stedit: modifier = $modi\n" if $DEBUG;
 
 	# do the substitution
 	my $count = $editor->subst($opt_s, $opt_t, $modi);
-	if (defined($count)) {
-		print "stedit: $count substitutions done\n" if $DEBUG;
-	} else {
-		print "stedit: Error: substituting\n";
-	}
+	print "stedit: Error: substituting\n" unless defined($count);
 }
 
 # write the file to disk
@@ -215,14 +208,13 @@ if (defined($opt_w)) {
 	# write the file to disk
 	# if no filename provided the default parameter is ""
 	# which means use original file 
-	print "stedit: write filename: $opt_w\n" if $DEBUG;
 	$editor->write($opt_w);
 }	
 
 # display the file
 # no title can be given
 # StEdit.pm uses a title for debugging purposes only
-if (defined($opt_D)) {
+if (defined($opt_l)) {
 	# display the file
 	# "" is the default parameter for -D switch
 	# and means no title

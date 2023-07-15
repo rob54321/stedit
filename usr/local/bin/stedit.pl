@@ -15,7 +15,7 @@ use warnings;
 use StEdit;
 use Getopt::Std;
 
-our ($opt_a, $opt_b, $opt_D, $opt_d, $opt_f, $opt_g, $opt_h, $opt_I, $opt_i, $opt_l, $opt_s, $opt_t, $opt_w, $opt_z);
+our ($opt_a, $opt_b, $opt_D, $opt_d, $opt_f, $opt_g, $opt_h, $opt_I, $opt_i, $opt_l, $opt_s, $opt_t, $opt_V, $opt_w, $opt_z);
 
 # usage function
 sub usage {
@@ -28,6 +28,7 @@ sub usage {
 	print "-w (write)  \"new filename\"\n";
 	print "-l (list file)\n";
 	print "-D (turn debugging on)\n";
+	print "-V print version and exit\n";
 	print "-h (help)\n";
 	exit 0;
 }
@@ -89,6 +90,7 @@ sub defaultparameter {
 #             -s  (subst) : "pattern"        options: -r "replacement" -i case insensitive, -g global
 #             -w  (write) : "new file name"
 #             -l  (list)  : 
+#             -V  print version and exit
 #             -h  (help)
 
 # check at least some arguments were given
@@ -96,6 +98,7 @@ my $count = scalar(@ARGV);
 
 # invoke usage if no arguments given
 usage if $count == 0;
+
 
 # for debugging
 my $DEBUG = 0;
@@ -108,7 +111,16 @@ defaultparameter;
 my @ORIGARGV = @ARGV;
 
 # set default parameter for 
-getopts ("a:bDd:f:ghI:ils:t:w:z");
+getopts ("a:bDd:f:ghI:ils:t:Vw:z");
+
+# print version and exit
+if ($opt_V) {
+	# print the installed version from dpkg-query
+	my $string = `dpkg-query -W stedit`;
+	my ($name, $version) = split /\s+/,$string;
+	print "Version: $version (installed version)\n";
+	exit 0;
+}
 
 # if -D is given turn on debugging
 if ($opt_D) {

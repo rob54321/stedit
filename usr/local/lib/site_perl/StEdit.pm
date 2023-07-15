@@ -37,6 +37,9 @@ sub new {
 	# get no of parameters
 	my $count = scalar(@_);
 	my $class = shift;
+	# if no file name passed - die
+	die "A full path name must be specified\n" if $count < 2;
+	
 	# get file name
 	$fname = shift;
 	# get DEBUG flag if it is passed

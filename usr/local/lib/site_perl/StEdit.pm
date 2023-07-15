@@ -359,7 +359,7 @@ sub insert {
 				# if modi contains ab return undef
 				if ($modi =~ /a.*b|b.*a/) {print "Insert error: ab invalid combination\n"; return}
 				$modi = "" unless $modi =~ /^i$|^b$|^a$|^ib$|^bi$|^ia$|^ai$/; last SWITCH;};
-				print "insert error: $count parameters supplied\n"; return;
+		print "insert error: $count parameters supplied\n"; return;
 	}
 
 	push @debug, "count = $count: pattern = $pattern: modi = $modi\n" if $DEBUG;

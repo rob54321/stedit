@@ -100,7 +100,9 @@ sub delete {
 	$_ = $count;
 	SWITCH: {
 		/^2/ && do {$pattern = shift; $modi = ""; last SWITCH;};
-		/^3/ && do {$pattern = shift; $modi = shift; $modi = "" unless $modi eq "i"; last SWITCH;};
+		/^3/ && do {$pattern = shift; $modi = shift; unless ($modi eq "i" or $modi eq "") {
+							             print "delete: Invalid modifier $modi\n";
+								     return;} last SWITCH;};
 		print "delete error: $count parameters passed\n"; return;
 	}
 	# debug print parameters
@@ -181,7 +183,10 @@ sub subst {
 	# get parameters
 	SWITCH: {
 		/^3/ && do {$patt = shift; $repl = shift; $modi = ""; last SWITCH;};
-		/^4/ && do {$patt = shift; $repl = shift; $modi = shift; $modi = "" unless $modi =~ /^i$|^g$|^ig$|^gi$/; last SWITCH;};
+		/^4/ && do {$patt = shift; $repl = shift; $modi = shift; unless ($modi =~ /^i$|^g$|^ig$|^gi$/ or $modi eq "") {
+										# invalid modifier
+										print "subst: Invalid modifier $modi\n";
+										return;} last SWITCH;};
 		print "susbst error: $count parameters passed\n"; return;
 	}
 
@@ -298,9 +303,9 @@ sub insertline {
 	my $rtemparray = shift;
 	my $modi = shift;
 
-	# for debug
-	my @debug = ("***Insertline***\n") if $DEBUG;
-	push @debug, "modi = $modi: line = ${$rline}\n" if $DEBUG;
+	# for debugging
+	my @debug if $DEBUG;
+	
 	# insert
 	if ($modi =~ /a/) {
 		# insert text after a line
@@ -315,9 +320,9 @@ sub insertline {
 		# for debug
 		push @debug, "new: ${$rtext}\nold: ${$rline}\n" if $DEBUG;
 	}
-	# for debug
-	print "@debug############\n" if $DEBUG;
 
+	# for debugging
+	print "@debug" if $DEBUG;
 	return;
 }
 # method to insert a string(s) in a file
@@ -356,9 +361,10 @@ sub insert {
 		/^3/ && do { $pattern = shift; $text = shift; $modi = ""; last SWITCH;};
 
 		/^4/ && do { $pattern = shift; $text = shift; $modi = shift;
-				# if modi contains ab return undef
-				if ($modi =~ /a.*b|b.*a/) {print "Insert error: ab invalid combination\n"; return}
-				$modi = "" unless $modi =~ /^i$|^b$|^a$|^ib$|^bi$|^ia$|^ai$/; last SWITCH;};
+				# if modi does not contain a valid modifier
+				unless ($modi =~ /^i$|^b$|^a$|^ib$|^bi$|^ia$|^ai$/ or $modi eq "") {
+					print "insert: Invalid modifier $modi\n";
+					return;} last SWITCH;};
 		print "insert error: $count parameters supplied\n"; return;
 	}
 

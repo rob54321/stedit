@@ -15,16 +15,16 @@ use warnings;
 use StEdit;
 use Getopt::Std;
 
-our ($opt_a, $opt_b, $opt_D, $opt_d, $opt_f, $opt_g, $opt_h, $opt_I, $opt_i, $opt_l, $opt_s, $opt_t, $opt_V, $opt_w, $opt_z);
+our ($opt_a, $opt_D, $opt_d, $opt_f, $opt_h, $opt_i, $opt_l, $opt_s, $opt_t, $opt_w, $opt_A, $opt_B, $opt_G, $opt_I, $opt_V);
 
 # usage function
 sub usage {
 	print "use ANSI-C quoting \$'...' for interpolation of \\n etc in text arguments\n";
 	print "stedit -f \"full pathname\" commands options\n";
-	print "-d (delete) \"pattern\" option -i case insensitive\n";
-	print "-a (append) \"text to append\" \n";
-	print "-I (insert) \"pattern\" option -t \"text\" -b (before: default) -z after: -i case insensitive\n";
-	print "-s (subst)  \"pattern\" option -r \"replacement\" -i case insensitive -g global\n";
+	print "-d (delete) \"pattern\" option -I case insensitive\n";
+	print "-a (append)             optins -t \"text to append\" \n";
+	print "-i (insert) \"pattern\" option -t \"text\" -B (before: default) -A after: -I case insensitive\n";
+	print "-s (subst)  \"pattern\" option -t \"replacement\" -I case insensitive -G global\n";
 	print "-w (write)  \"new filename\"\n";
 	print "-l (list file)\n";
 	print "-D (turn debugging on)\n";
@@ -41,9 +41,7 @@ sub usage {
 sub defaultparameter {
 
 	# hash supplying default arguments to switches
-	# -b is for mounting bit locker drives
-	# -v is for mounting vera containers
-	# -u is for unmounting any drive
+	# -w is writing file to disk. No parameter given means use original file name
 	# the default argument, if not given on the command line is all drives
 	# the parameter "" cannot be used hence " " is used to indicate there is no filename
 	my %defparam = ( -w => "");
@@ -84,11 +82,11 @@ sub defaultparameter {
 # usage stedit options command options
 # 1. -f filename to edit compulsory
 # 2. commands
-#             -d  (delete): "pattern"     options: -i case insensitive
-#             -a  (append): "string to append"
-#             -I  (insert): "pattern"        options: -t "text" -b before(default), -z after, -i case insensitive
-#             -s  (subst) : "pattern"        options: -r "replacement" -i case insensitive, -g global
-#             -w  (write) : "new file name"
+#             -d  (delete): "pattern"        options: -I case insensitive
+#             -a  (append):                  options: -t "text to append"
+#             -I  (insert): "pattern"        options: -t "text" -B before(default), -A after, -A case insensitive
+#             -s  (subst) : "pattern"        options: -t "replacement text" -I case insensitive, -G global
+#             -w  (write) : "optional new file name"
 #             -l  (list)  : 
 #             -V  print version and exit
 #             -h  (help)
@@ -111,7 +109,7 @@ defaultparameter;
 my @ORIGARGV = @ARGV;
 
 # set default parameter for 
-getopts ("a:bDd:f:ghI:ils:t:Vw:z");
+getopts ("ad:f:hi:ls:t:w:ABDGI");
 
 # print version and exit
 if ($opt_V) {
@@ -160,7 +158,7 @@ if ($opt_f) {
 if ($opt_d) {
 	# delete may have modifier i
 	my $modi = "";
-	$modi = "i" if defined($opt_i);
+	$modi = "i" if defined($opt_I);
 	# rc is no lines deleted or undefined if an error occurred.
 	my $count = $editor->delete($opt_d, $modi);
 	print "stedit: Error deleting\n" unless defined($count);
@@ -170,10 +168,10 @@ if ($opt_d) {
 # note: if the string contains \n characters
 # the bash ansi-c quoting $'...' must be used: eg. -a $'string\nnext line'
 # must be used
-# parameters passed: text
+# parameters passed: text from -t option
 # no modifiers work with append
 if ($opt_a) {
-	my $rc = $editor->append($opt_a);
+	my $rc = $editor->append($opt_t);
 	print "stedit: Error appending to $opt_f\n" unless defined($rc);
 }
 
@@ -183,15 +181,15 @@ if ($opt_a) {
 # also the pattern can be case (in)sensitive 
 # stedit.pl modifiers -i case insensitive, -a insert after, -b insert before - default, work
 # parameters passed: pattern, text, optional modifiers
-if ($opt_I) {
+if ($opt_i) {
 	# error if no text given
 	die "stedit: Insert error: no pattern/text given\n" unless $opt_t;
 
 	# check which modifiers given
 	my $modi = "";
-	$modi = "a"         if defined($opt_z);
-	$modi = $modi . "b" if defined($opt_b);
-	$modi = $modi . "i" if defined($opt_i);
+	$modi = "a"         if defined($opt_A);
+	$modi = $modi . "b" if defined($opt_B);
+	$modi = $modi . "i" if defined($opt_I);
 
 	# do insert, return from method is no of insertions
 	my $count = $editor->insert($opt_I, $opt_t, $modi);	
@@ -206,8 +204,8 @@ if ($opt_s) {
 
 	# check which modifiers given
 	my $modi = "";
-	$modi = "i" if defined($opt_i);
-	$modi = $modi . "g" if defined($opt_g);
+	$modi = "i" if defined($opt_I);
+	$modi = $modi . "g" if defined($opt_G);
 
 	# do the substitution
 	my $count = $editor->subst($opt_s, $opt_t, $modi);

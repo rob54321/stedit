@@ -192,7 +192,7 @@ if ($opt_i) {
 	$modi = $modi . "i" if defined($opt_I);
 
 	# do insert, return from method is no of insertions
-	my $count = $editor->insert($opt_I, $opt_t, $modi);	
+	my $count = $editor->insert($opt_i, $opt_t, $modi);	
 	print "stedit: Error: inserting\n" unless defined($count);
 }
 

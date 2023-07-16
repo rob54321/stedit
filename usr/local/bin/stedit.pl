@@ -84,7 +84,7 @@ sub defaultparameter {
 # 2. commands
 #             -d  (delete): "pattern"        options: -I case insensitive
 #             -a  (append):                  options: -t "text to append"
-#             -I  (insert): "pattern"        options: -t "text" -B before(default), -A after, -A case insensitive
+#             -i  (insert): "pattern"        options: -t "text" -B before(default), -A after, -A case insensitive
 #             -s  (subst) : "pattern"        options: -t "replacement text" -I case insensitive, -G global
 #             -w  (write) : "optional new file name"
 #             -l  (list)  : 
@@ -109,7 +109,7 @@ defaultparameter;
 my @ORIGARGV = @ARGV;
 
 # set default parameter for 
-getopts ("ad:f:hi:ls:t:w:ABDGI");
+getopts ("ad:f:hi:ls:t:w:ABDGIV");
 
 # print version and exit
 if ($opt_V) {

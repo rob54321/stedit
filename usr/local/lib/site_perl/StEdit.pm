@@ -153,8 +153,14 @@ sub delete {
 	
 	# set efile to new array
 	@efile = @temparray;
+
 	# for debug
-	print "@debug#############\n" if $DEBUG;
+	if ($DEBUG) {
+		foreach my $item (@debug) {
+			print "$item";
+		}
+		print "###########\n";
+	}
 
 	return $count;
 }
@@ -253,8 +259,13 @@ sub subst {
 	push @debug, "$count substitutions\n" if $DEBUG;
 	
 	# for debug
-	print "@debug#############\n" if $DEBUG;
-	
+	if ($DEBUG) {
+		foreach my $item (@debug) {
+			print "$item";
+		}
+		print "###########\n";
+	}
+
 	# return no of matches
 	return $count;
 }
@@ -284,7 +295,14 @@ sub append {
 	# string can be : something\nnew line\n\tnew line again\n\tetc
 	push @efile, $text;
 	# for debug
-	print "@debug#############\n" if $DEBUG;
+	# for debug
+	if ($DEBUG) {
+		foreach my $item (@debug) {
+			print "$item";
+		}
+		print "###########\n";
+	}
+
 	
 	return 1;
 }
@@ -304,7 +322,7 @@ sub insertline {
 	my $modi = shift;
 
 	# for debugging
-	my @debug if $DEBUG;
+	my $dline if $DEBUG;
 	
 	# insert
 	if ($modi =~ /a/) {
@@ -312,17 +330,17 @@ sub insertline {
 		push @{$rtemparray}, ${$rline};
 		push @{$rtemparray}, ${$rtext};
 		# for debug
-		push @debug, "old: ${$rline}\nnew: ${$rtext}\n" if $DEBUG;
+		$dline = "old: ${$rline}\nnew: ${$rtext}\n" if $DEBUG;
 	} else {
 		# insert before a line - default
 		push @{$rtemparray}, ${$rtext};
 		push @{$rtemparray}, ${$rline};
 		# for debug
-		push @debug, "new: ${$rtext}\nold: ${$rline}\n" if $DEBUG;
+		$dline = "new: ${$rtext}\nold: ${$rline}\n" if $DEBUG;
 	}
 
 	# for debugging
-	print "@debug" if $DEBUG;
+	print "$dline" if $DEBUG;
 	return;
 }
 # method to insert a string(s) in a file
@@ -411,7 +429,13 @@ sub insert {
 
 	# for debug
 	push @debug, "$count times inserted\n" if $DEBUG;
-	print "@debug#############\n" if $DEBUG;
+	# for debug
+	if ($DEBUG) {
+		foreach my $item (@debug) {
+			print "$item";
+		}
+		print "###########\n";
+	}
 
 	return $count;
 }

@@ -101,9 +101,9 @@ sub delete {
 	SWITCH: {
 		/^2/ && do {$pattern = shift; $modi = ""; last SWITCH;};
 		/^3/ && do {$pattern = shift; $modi = shift; unless ($modi eq "i" or $modi eq "") {
-							             print "delete: Invalid modifier $modi\n";
+							             warn "delete: Invalid modifier $modi";
 								     return;} last SWITCH;};
-		print "delete error: $count parameters passed\n"; return;
+		warn "delete error: $count parameters passed"; return;
 	}
 	# debug print parameters
 	# delete all lines that match address
@@ -191,9 +191,9 @@ sub subst {
 		/^3/ && do {$patt = shift; $repl = shift; $modi = ""; last SWITCH;};
 		/^4/ && do {$patt = shift; $repl = shift; $modi = shift; unless ($modi =~ /^i$|^g$|^ig$|^gi$/ or $modi eq "") {
 										# invalid modifier
-										print "subst: Invalid modifier $modi\n";
+										warn "subst: Invalid modifier $modi";
 										return;} last SWITCH;};
-		print "susbst error: $count parameters passed\n"; return;
+		warn "susbst error: $count parameters passed"; return;
 	}
 
 	# for debug
@@ -285,7 +285,7 @@ sub append {
 	push @debug, "no of parameters = $count\n" if $DEBUG;
 	
 	if ($count != 2) {
-		print "append error: $count parameters passed \n";
+		warn "append error: $count parameters passed";
 		return;
 	}
 	my $self = shift;
@@ -381,9 +381,9 @@ sub insert {
 		/^4/ && do { $pattern = shift; $text = shift; $modi = shift;
 				# if modi does not contain a valid modifier
 				unless ($modi =~ /^i$|^b$|^a$|^ib$|^bi$|^ia$|^ai$/ or $modi eq "") {
-					print "insert: Invalid modifier $modi\n";
+					warn "insert: Invalid modifier $modi";
 					return;} last SWITCH;};
-		print "insert error: $count parameters supplied\n"; return;
+		warn "insert error: $count parameters supplied"; return;
 	}
 
 	push @debug, "count = $count: pattern = $pattern: modi = $modi\n" if $DEBUG;

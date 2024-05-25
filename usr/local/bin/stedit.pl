@@ -22,13 +22,14 @@ sub usage {
 	print "use ANSI-C quoting \$'...' for interpolation of \\n etc in text arguments\n";
 	print "stedit -f \"full pathname\" commands options\n";
 	print "-d (delete) \"pattern\" option -I case insensitive\n";
-	print "-a (append)             optins -t \"text to append\" \n";
-	print "-i (insert) \"pattern\" option -t \"text\" -B (before: default) -A after: -I case insensitive\n";
-	print "-s (subst)  \"pattern\" option -t \"replacement\" -I case insensitive -G global\n";
+	print "-a (append)             option -t \"text to append\" \n";
+	print "-i (insert) \"pattern\" options -t \"text\" -B (before: default) -A after: -I case insensitive\n";
+	print "-s (subst)  \"pattern\" options -t \"replacement\" -I case insensitive -G global\n";
 	print "-w (write)  \"new filename\"\n";
 	print "-l (list file)\n";
 	print "-D (turn debugging on)\n";
 	print "-V print version and exit\n";
+	print "pattern could be \$'^some line\$|^or.*another\$|^\$'\n";
 	print "-h (help)\n";
 	exit 0;
 }

@@ -52,6 +52,7 @@ sub execsub {
 	# get parameters
 	my $self = shift @_;
 
+	# ref to cmdl array of switches
 	my $refsw = shift @_;
 	# general ref to subs
 	# to be invoked
@@ -63,29 +64,37 @@ sub execsub {
 		# if it is not a switch, it must be
 		# a parameter to the previous switch
 		if ($refsw->[$i] =~ /^-/) {
-			$refsub = $refhash->{$refsw->[$i]};
-			# if next cmdl option is not
-			# a switch, it must be a parameter
-			# do not go past the end of the list
-			if ($i < scalar(@$refsw)) {
-				if ($i < scalar(@$refsw) - 1 and $refsw->[$i+1] !~ /^-/) {
-					# this is the parameter for the previous switch
-					# invoke sub
-					print "calling $refsub with parameter $refsw->[$i+1]\n";
-					$refsub->($refsw->[$i+1]);
+			# check if the switch (key) exists in the hash
+			# print and error message if not
+			if (exists($refhash->{$refsw->[$i]})) {
+				$refsub = $refhash->{$refsw->[$i]};
+				# if next cmdl option is not
+				# a switch, it must be a parameter
+				# do not go past the end of the list
+				if ($i < scalar(@$refsw)) {
+					if ($i < scalar(@$refsw) - 1 and $refsw->[$i+1] !~ /^-/) {
+						# this is the parameter for the previous switch
+						# invoke sub
+						print "calling $refsub with parameter $refsw->[$i+1]\n";
+						$refsub->($refsw->[$i+1]);
 
-					# increase i
-					$i++;
-				} else {
-					# there is no parameter
-					# for this switch
-					# this could also be the last switch
-					# invoke the sub
-					print "last switch $refsw->[$i]\n" if $i == scalar(@$refsw) - 1;
-					$refsub->();
+						# increase i
+						$i++;
+					} else {
+						# there is no parameter
+						# for this switch
+						# this could also be the last switch
+						# invoke the sub
+						print "last switch $refsw->[$i]\n" if $i == scalar(@$refsw) - 1;
+						$refsub->();
+					}
 				}
+			} else {
+				# print message show not a valid switch
+				print "Invalid switch: $refsw->[$i]\n";
 			}
 		}
 	}
+	return;
 }
 1;

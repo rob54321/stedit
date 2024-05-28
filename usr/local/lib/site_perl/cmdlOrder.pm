@@ -17,7 +17,10 @@ package cmdlOrder;
 use strict;
 use warnings;
 
-# ref to hash containing switch => ref to sub to invoke
+# ref to hash = (switch => [ reftosub/0, 0/1 (not)/takes parameter]
+# ref to sub = 0 if not associated with a sub
+# next param: 1 = takes a parameter
+#             0 = does not take a parameter
 my $refhash;
 
 #######################################################
@@ -66,8 +69,12 @@ sub execsub {
 		if ($refsw->[$i] =~ /^-/) {
 			# check if the switch (key) exists in the hash
 			# print and error message if not
+			# refhash is ref to hash $refhash = {switch => [reftosub/0, 0/1]}
 			if (exists($refhash->{$refsw->[$i]})) {
-				$refsub = $refhash->{$refsw->[$i]};
+				$refsub = $refhash->{$refsw->[$i]}->[0];
+				# does refsub point to a sub?
+				
+				
 				# if next cmdl option is not
 				# a switch, it must be a parameter
 				# do not go past the end of the list
@@ -90,7 +97,7 @@ sub execsub {
 					}
 				}
 			} else {
-				# print message show not a valid switch
+				# invalid switch print message show not a valid switch
 				print "Invalid switch: $refsw->[$i]\n";
 			}
 		}

@@ -32,13 +32,20 @@ sub dumbfries {
 	print "sub d with parameter $pm\n";
 }
 
-my %subhash = ( -a => \&another,
-             -b => \&brady,
-             -c => \&cleo,
-             -d => \&dumbfries);
+# hash for cmdlOrder.pm for valid switches
+# switch may or may not be associated with a sub
+# format: switch = > anonomous array ref
+#         switch => [\&sub, 1/0 takes/does not take a parameter]
+#         switch => [0, 0/1 (not)/takes a parameter]
+# -a -d take parameters, -b -c do not, -e is not associated with a sub
+my %subhash = ( -a => [\&another, 1],
+                -b => [\&brady, 0],
+                -c => [\&cleo, 0],
+                -d => [\&dumbfries, 1],
+                -e => [0, 0]);
 
 # construct the object
 my $control = cmdlOrder->new(\%subhash);
 
 print @ARGV . "\n";
-cmdlOrder->execsub(\@ARGV);
+.cmdlOrder->execsub(\@ARGV);

@@ -69,32 +69,51 @@ sub execsub {
 		if ($refsw->[$i] =~ /^-/) {
 			# check if the switch (key) exists in the hash
 			# print and error message if not
-			# refhash is ref to hash $refhash = {switch => [reftosub/0, 0/1]}
-			if (exists($refhash->{$refsw->[$i]})) {
-				$refsub = $refhash->{$refsw->[$i]}->[0];
+			# refhash is ref to hash $refhash = {switch => [reftosub/0, global var $opt_switch = 1/parameter]}
+			# variable for switch
+			my $switch = $refsw->[$i];
+			
+			if (exists($refhash->{$switch})) {
+				$refsub = $refhash->{$switch}->[0];
 				# does refsub point to a sub?
-				
-				
-				# if next cmdl option is not
-				# a switch, it must be a parameter
-				# do not go past the end of the list
-				if ($i < scalar(@$refsw)) {
-					if ($i < scalar(@$refsw) - 1 and $refsw->[$i+1] !~ /^-/) {
-						# this is the parameter for the previous switch
-						# invoke sub
-						print "calling $refsub with parameter $refsw->[$i+1]\n";
-						$refsub->($refsw->[$i+1]);
+				# if ref is either a sub ref
+				# or a 0 meaning no sub is referenced.
+				if ($refsub != 0) {
+					# refsub points to a sub
+					# determine if there is a 
+					# parameter following and execute the sub
+					# set global $opt_switch = parameter
+					# invoke the sub
+					# if next cmdl option is not
+					# a switch, it must be a parameter
+					# do not go past the end of the list
+					if ($i < scalar(@$refsw)) {
+						if ($i < scalar(@$refsw) - 1 and $refsw->[$i+1] !~ /^-/) {
+							# this is the parameter for the previous switch
+							# set global var $opt_switch to parameter value
+							${$refhash->{$switch}->[1]} = $refsw->[$i+1];
+							
+							print "calling $refsub global parameter is $refsw->[$i+1]\n";
+							$refsub->();
 
-						# increase i
-						$i++;
-					} else {
-						# there is no parameter
-						# for this switch
-						# this could also be the last switch
-						# invoke the sub
-						print "last switch $refsw->[$i]\n" if $i == scalar(@$refsw) - 1;
-						$refsub->();
+							# increase i
+							$i++;
+						} else {
+							# there is no parameter
+							# set the associated global $opt_switch to 1
+							${$refhash->{$switch}->[1]} = 1;
+							# this could also be the last switch
+							# invoke the sub
+							# the switch is still $refsw->[$i]
+							print "calling $refsub global parameter is ${$refhash->{$switch}->[1]}\n";
+							$refsub->();
+						}
 					}
+				} else {
+					# refsub is 0 and no sub associated
+					# set the global var $opt_switch to 1
+					${$refhash->{$switch}->[1]} = 1;
+					print "$switch is not associated with a sub global parameter is ${$refhash->{$switch}->[1]}\n";
 				}
 			} else {
 				# invalid switch print message show not a valid switch

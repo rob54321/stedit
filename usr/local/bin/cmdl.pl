@@ -14,38 +14,46 @@ use warnings;
 use lib "/home/robert/stedit/usr/local/lib/site_perl";
 use cmdlOrder;
 
+our ($opt_a, $opt_b, $opt_c, $opt_d, $opt_e, $opt_A);
+
 sub another {
-	my $pm = shift;
+	my $pm = $opt_a;
 	print "sub a with parameter $pm\n";
+	if ($opt_A) {
+		print "opt_A is defined = $opt_A\n";
+	} else {
+		print "opt_A not defined\n";
+	}
 }
 
 sub brady {
-	print "sub b\n";
+	print "sub b $opt_b\n";
 }
 
 sub cleo {
-	print "sub c\n";
+	print "sub c $opt_c\n";
 }
 
 sub dumbfries {
-	my $pm = shift;
+	my $pm = $opt_d;
 	print "sub d with parameter $pm\n";
 }
 
 # hash for cmdlOrder.pm for valid switches
 # switch may or may not be associated with a sub
-# format: switch = > anonomous array ref
-#         switch => [\&sub, 1/0 takes/does not take a parameter]
-#         switch => [0, 0/1 (not)/takes a parameter]
+# format: 
+#         switch => [\&sub or 0 no sub, $opt_switch global set to 1 or has parameter value if switch given ]
 # -a -d take parameters, -b -c do not, -e is not associated with a sub
-my %subhash = ( -a => [\&another, 1],
-                -b => [\&brady, 0],
-                -c => [\&cleo, 0],
-                -d => [\&dumbfries, 1],
-                -e => [0, 0]);
+# all $opt_XXX must be declared with our ($opt_x....
+my %subhash = ( -a => [\&another, \$opt_a],
+                -b => [\&brady, \$opt_b],
+                -c => [\&cleo, \$opt_c],
+                -d => [\&dumbfries, \$opt_d],
+                -e => [0, \$opt_e],
+		-A => [0, \$opt_A]);
 
 # construct the object
 my $control = cmdlOrder->new(\%subhash);
 
 print @ARGV . "\n";
-.cmdlOrder->execsub(\@ARGV);
+cmdlOrder->execsub(\@ARGV);

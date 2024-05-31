@@ -17,8 +17,7 @@ use cmdlOrder;
 our ($opt_a, $opt_b, $opt_c, $opt_d, $opt_e, $opt_A);
 
 sub another {
-	my $pm = $opt_a;
-	print "sub a with parameter $pm\n";
+	print "sub a $opt_a\n";
 	if ($opt_A) {
 		print "opt_A is defined = $opt_A\n";
 	} else {
@@ -28,6 +27,8 @@ sub another {
 
 sub brady {
 	print "sub b $opt_b\n";
+	print "sub b opt_A: $opt_A\n" if $opt_A;
+	print "sub b opt_e: $opt_e\n" if $opt_e;
 }
 
 sub cleo {
@@ -42,9 +43,10 @@ sub dumbfries {
 # hash for cmdlOrder.pm for valid switches
 # switch may or may not be associated with a sub
 # format: 
-#         switch => [\&sub or 0 no sub, $opt_switch global set to 1 or has parameter value if switch given ]
-# -a -d take parameters, -b -c do not, -e is not associated with a sub
-# all $opt_XXX must be declared with our ($opt_x....
+#         switch => [reftosub, \$opt_switch]
+#	  switch => [0, \$opt_switch], if there is no associated sub.
+#         $opt_switch = parameter value | null in case where there is no ref to sub
+# $opt_switch is declared as our ($opt_switch)
 my %subhash = ( -a => [\&another, \$opt_a],
                 -b => [\&brady, \$opt_b],
                 -c => [\&cleo, \$opt_c],

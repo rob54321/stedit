@@ -45,7 +45,8 @@ sub dumbfries {
 # format: 
 #         switch => [reftosub, \$opt_switch]
 #	  switch => [0, \$opt_switch], if there is no associated sub.
-#         $opt_switch = parameter value | null in case where there is no ref to sub
+#         $opt_switch = parameter value | null in case where there no parameter
+#         a switch without a sub can have a parameter
 # $opt_switch is declared as our ($opt_switch)
 my %subhash = ( -a => [\&another, \$opt_a],
                 -b => [\&brady, \$opt_b],
@@ -59,3 +60,10 @@ my $control = cmdlOrder->new(\%subhash);
 
 print @ARGV . "\n";
 cmdlOrder->execsub(\@ARGV);
+
+print "opt_a = $opt_a\n" if $opt_a;
+print "opt_b = $opt_b\n" if $opt_b;
+print "opt_c = $opt_c\n" if $opt_c;
+print "opt_d = $opt_d\n" if $opt_d;
+print "opt_e = $opt_e\n" if $opt_e;
+print "opt_A = $opt_A\n" if $opt_A;

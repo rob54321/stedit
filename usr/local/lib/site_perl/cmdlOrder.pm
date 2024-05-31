@@ -80,48 +80,57 @@ sub execsub {
 				# does refsub point to a sub?
 				# if ref is either a sub ref
 				# or a 0 meaning no sub is referenced.
-				if ($refsub != 0) {
-					# refsub points to a sub
-					# determine if there is a 
-					# parameter following and execute the sub
-					# set global $opt_switch = parameter
-					# push the ref to a list
-					# so that all invokations take
-					# place after the cmd line parameters
-					# have been parsed. This ensures
-					# all global vars are set before invokation.
-					# if next cmdl option is not
-					# a switch, it must be a parameter
-					# do not go past the end of the list
-					if ($i < scalar(@$refsw)) {
-						# check if next item is a switch or parameter
-						if ($i < scalar(@$refsw) - 1 and $refsw->[$i+1] !~ /^-/) {
-							# this is the parameter for the previous switch
-							
-							print "listing sub for $switch: global parameter = $refsw->[$i+1]\n";
-							
-							# add sub ref to list for invokation
+
+				# refsub points to a sub or 0
+				# determine if there is a 
+				# parameter following and execute the sub
+				# set global $opt_switch = parameter
+				# push the ref to a list
+				# so that all invokations take
+				# place after the cmd line parameters
+				# have been parsed. This ensures
+				# all global vars are set before invokation.
+				# if next cmdl option is not
+				# a switch, it must be a parameter
+				# do not go past the end of the list
+				if ($i < scalar(@$refsw)) {
+					# check if next item is a switch or parameter
+					if ($i < scalar(@$refsw) - 1 and $refsw->[$i+1] !~ /^-/) {
+						# this is the parameter for the previous switch
+						
+						
+						# add sub ref to list for invokation
+						# unless the reference is 0
+						if ($refsub != 0) {
+							print "switch = $switch: refsub = $refsub: parameter = $refsw->[$i+1]\n";
 							push @execsublist, $refsub;
-							
+						
 							# push the switch to the next value
 							push @execsublist, $switch;
 
 							# add to list to exectute all subs
 							# push the parameter
 							push @execsublist, $refsw->[$i+1];
+                        } else {
+							# ref to sub is 0
+							# with parameter
+							print "switch = $switch: refsub = $refsub: parameter = $refsw->[$i+1]\n";
+						}
 
-							# set associated ref to $opt_switch in hash to the value
-							# of the parameter
-							${$refhash->{$switch}->[1]} = $refsw->[$i+1];
+						# set associated ref to $opt_switch in hash to the value
+						# of the parameter
+						${$refhash->{$switch}->[1]} = $refsw->[$i+1];
 
-							# increase i
-							$i++;
-						} else {
-							# there is no parameter
-							# this could also be the last switch
-							# the switch is still $refsw->[$i]
-							print "listing sub for $switch: no parameter\n";
+						# increase i
+						$i++;
+					} else {
+						# there is no parameter
+						# this could also be the last switch
+						# the switch is still $refsw->[$i]
 
+						# add to execsublist only if ref != 0
+						if ($refsub != 0) {
+							print "switch = $switch: refsub = $refsub: no parameter\n";
 							# add to list execute all subs
 							push @execsublist, $refsub;
 
@@ -130,23 +139,22 @@ sub execsub {
 
 							# push null to indicate no value
 							push @execsublist, "null";
-
-							# to indicate switch is there but
-							# no parameter is associated
-							${$refhash->{$switch}->[1]} = "null";
+						} else {
+							# ref to sub is 0
+							# with no parameter
+							print "switch = $switch: refsub = $refsub:  no parameter\n";
 						}
+
+						# to indicate switch is there but
+						# no parameter is associated
+						${$refhash->{$switch}->[1]} = "null";
 					}
-				} else {
-					# refsub is 0 and no sub associated
-					# set the global var $opt_switch to null
-					# to indicate no parameter.
-					${$refhash->{$switch}->[1]} = "null";
-					print "$switch is not associated with a sub global var = ${$refhash->{$switch}->[1]}\n";
 				}
 			} else {
 				# print message show not a valid switch
 				print "Invalid switch: $refsw->[$i]\n";
 			}
+					
 		}
 	}
 	# now all global vars have been set

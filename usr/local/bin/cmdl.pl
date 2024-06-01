@@ -18,17 +18,10 @@ my ($opt_a, $opt_b, $opt_c, $opt_d, $opt_e, $opt_A);
 
 sub another {
 	print "sub a $opt_a\n";
-	if ($opt_A) {
-		print "opt_A is defined = $opt_A\n";
-	} else {
-		print "opt_A not defined\n";
-	}
 }
 
 sub brady {
 	print "sub b $opt_b\n";
-	print "sub b opt_A: $opt_A\n" if $opt_A;
-	print "sub b opt_e: $opt_e\n" if $opt_e;
 }
 
 sub cleo {
@@ -60,8 +53,8 @@ my %subhash = ( -a => [\&another, \$opt_a],
 # construct the object
 my $control = cmdlOrder->new(\%subhash, \@ARGV);
 
-print @ARGV . "\n";
-# cmdlOrder->execsub(\@ARGV);
+print "command line: @ARGV\n";
+cmdlOrder->execsub();
 
 print "opt_a = $opt_a\n" if $opt_a;
 print "opt_b = $opt_b\n" if $opt_b;

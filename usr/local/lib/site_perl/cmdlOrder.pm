@@ -4,12 +4,16 @@ package cmdlOrder;
 # of subs the same as the order given on the commandline.
 # a switch -a will invoke a sub which is registered in the hash
 # if the parameter following -a on command line is not another switch
-# it is taken to be a parameter and passed to the sub for a.
-# If there is no parameter for sub a, nothing is passed.
-# the subs themselves must be able to accept a variable no of arguments
-# a switch that is not associated with a sub has a global var $opt_switch
-# associated with it. this is set to 1 if the switch is given.
-
+# the corresponding global var $opt_switch is set to parameter value
+# if there is no parameter $opt_switch is set to "null"
+# if the switch was not on command line it is undefined.
+#
+# the switches that do not take subs are processed by
+# first by the constructor method new.
+# Note: if a switch is given multiple times
+# with differents parameters, only the 
+# global var $opt_switch will be set to the last parameter.
+# the switches with subs are then executed.
 
 
 
@@ -21,7 +25,7 @@ use warnings;
 #
 my $refhash;
 
-# ref to array containing command line switches
+# ref to array containing command line entry of switches
 my $refswlist;
 
 #######################################################
@@ -35,7 +39,7 @@ my $refswlist;
 #             ref to array of command line parameters
 #######################################################
 sub new {
-	print "invoking cmdlOrder->new()\n";
+	# print "invoking cmdlOrder->new()\n";
 	# get parameters
 	# there must be 2 parameters
 	die "ref to hash with switches/subs and ref to command line array required\n" unless scalar(@_) >= 3;
@@ -71,16 +75,16 @@ sub new {
 						# valid switch with a parameter
 						# set the value
 						${$refhash->{$switch}->[1]} = $refswlist->[$i+1];
-						print "$switch: ${$refhash->{$switch}->[1]}\n";
+						# print "$switch: ${$refhash->{$switch}->[1]}\n";
 						
 						# switch might be the last on the line
 					} elsif ($i < scalar(@$refswlist) and $refswlist->[$i] =~ /^-/) {
 						# this is a switch with no parameter
 						${$refhash->{$switch}->[1]} = "null";
-						print "$switch: ${$refhash->{$switch}->[1]}\n";
+						# print "$switch: ${$refhash->{$switch}->[1]}\n";
 					} else {
 						# code should never get here
-						print "line 80: Error: switch: $switch\ni: $i\n";
+						print "line 87: Error: switch: $switch\ni: $i\n";
 					}
 				}
 			} else {
@@ -96,7 +100,10 @@ sub new {
 	return $self;	
 }	 
 
-# method to invoke subs with parameters
+#####################################################
+# method to invoke subs associated with command
+# line switches. No parameters are passed to sub.
+# The global variables are set.
 # following command line order
 # parameters : none
 # return: nothing
@@ -109,10 +116,6 @@ sub execsub {
 	# to be invoked
 	my $refsub;
 
-	# a list of sub refereces to invoke.
-	# @execsublist = (reftosub, switch, parameter or "null")
-	my @execsublist = ();
-	
 	# invoke subs from cmdl switches
 	for (my $i=0; $i<scalar(@$refswlist); $i++) {
 		# get sub ref if parameter is a switch
@@ -127,51 +130,27 @@ sub execsub {
 			
 			if (exists($refhash->{$switch})) {
 				$refsub = $refhash->{$switch}->[0];
-				# does refsub point to a sub?
-				# if ref is either a sub ref
-				# or a 0 meaning no sub is referenced.
-
-				# refsub points to a sub or 0
-				# determine if there is a 
-				# parameter following and execute the sub
-				# set global $opt_switch = parameter
-				# push the ref to a list
-				# so that all invokations take
-				# place after the cmd line parameters
-				# have been parsed. This ensures
-				# all global vars are set before invokation.
-				# if next cmdl option is not
-				# a switch, it must be a parameter
-				# do not go past the end of the list
+				# find the next switch with associated sub
+				# and set global var $opt_switch with parameter
+				# or "null" if there is/is not a parameter
+				# execute the sub.
 				if ($i < scalar(@$refswlist)) {
 					# check if next item is a switch or parameter
 					if ($i < scalar(@$refswlist) - 1 and $refswlist->[$i+1] !~ /^-/) {
 						# this is the parameter for the previous switch
-						
-						
 						# add sub ref to list for invokation
-						# unless the reference is 0
+						# if switch is associated with sub
 						if ($refsub != 0) {
-							print "switch = $switch: refsub = $refsub: parameter = $refswlist->[$i+1]\n";
-							push @execsublist, $refsub;
-						
-							# push the switch to the next value
-							push @execsublist, $switch;
+							# print "switch = $switch: refsub = $refsub: parameter = $refswlist->[$i+1]\n";
+							# set $opt_switch to parameter
+							${$refhash->{$switch}->[1]} = $refswlist->[$i+1];
 
-							# add to list to exectute all subs
-							# push the parameter
-							push @execsublist, $refswlist->[$i+1];
-                        } else {
-							# ref to sub is 0
-							# with parameter
-							print "switch = $switch: refsub = $refsub: parameter = $refswlist->[$i+1]\n";
-						}
+							# execute the sub
+							$refsub->();
+                        }
 
-						# set associated ref to $opt_switch in hash to the value
-						# of the parameter
-						${$refhash->{$switch}->[1]} = $refswlist->[$i+1];
-
-						# increase i
+						# increase i since parameter following
+						# switch was used
 						$i++;
 					} else {
 						# there is no parameter
@@ -180,24 +159,14 @@ sub execsub {
 
 						# add to execsublist only if ref != 0
 						if ($refsub != 0) {
-							print "switch = $switch: refsub = $refsub: no parameter\n";
-							# add to list execute all subs
-							push @execsublist, $refsub;
+							# print "switch = $switch: refsub = $refsub: no parameter\n";
+							# set $opt_switch to "null" there is no parameter
+							${$refhash->{$switch}->[1]} = "null";
 
-							# push the switch to the next value
-							push @execsublist, $switch;
+							# execute the sub
+							$refsub->();
+                        }
 
-							# push null to indicate no value
-							push @execsublist, "null";
-						} else {
-							# ref to sub is 0
-							# with no parameter
-							print "switch = $switch: refsub = $refsub:  no parameter\n";
-						}
-
-						# to indicate switch is there but
-						# no parameter is associated
-						${$refhash->{$switch}->[1]} = "null";
 					}
 				}
 			} else {
@@ -207,23 +176,5 @@ sub execsub {
 					
 		}
 	}
-	# now all global vars have been set
-	# invoke the subs in the order of execsublist
-	print "execsublist = @execsublist\n";
-	
-	# @execsublist = (reftosub 1, switch, parameter ......)
-	for (my $i=0; $i<scalar(@execsublist); $i=$i+3) {
-		# invoke sub , parameter is in $opt_switch
-		# set global var $opt_switch for
-		# this call. get the switch
-		my $switch = $execsublist[$i+1];
-		
-		# set the global var for this call
-		${$refhash->{$switch}->[1]} = $execsublist[$i+2];
-
-		# if there is one, otherwise null.
-		$execsublist[$i]->();
-	}
-	return;
 }
 1;

@@ -14,7 +14,7 @@ use warnings;
 use lib "/home/robert/stedit/usr/local/lib/site_perl";
 use cmdlOrder;
 
-our ($opt_a, $opt_b, $opt_c, $opt_d, $opt_e, $opt_A);
+my ($opt_a, $opt_b, $opt_c, $opt_d, $opt_e, $opt_A);
 
 sub another {
 	print "sub a $opt_a\n";

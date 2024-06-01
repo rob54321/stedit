@@ -48,6 +48,8 @@ sub dumbfries {
 #         $opt_switch = parameter value | null in case where there no parameter
 #         a switch without a sub can have a parameter
 # $opt_switch is declared as our ($opt_switch)
+$opt_A = "switch A";
+
 my %subhash = ( -a => [\&another, \$opt_a],
                 -b => [\&brady, \$opt_b],
                 -c => [\&cleo, \$opt_c],
@@ -56,10 +58,10 @@ my %subhash = ( -a => [\&another, \$opt_a],
 		-A => [0, \$opt_A]);
 
 # construct the object
-my $control = cmdlOrder->new(\%subhash);
+my $control = cmdlOrder->new(\%subhash, \@ARGV);
 
 print @ARGV . "\n";
-cmdlOrder->execsub(\@ARGV);
+# cmdlOrder->execsub(\@ARGV);
 
 print "opt_a = $opt_a\n" if $opt_a;
 print "opt_b = $opt_b\n" if $opt_b;

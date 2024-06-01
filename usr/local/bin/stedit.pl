@@ -244,16 +244,31 @@ do {
 	print "#################\n";
 } if $DEBUG;
 
-$opt_f = "/home/robert/file1.txt";
-
 # create instance and initialise switches not
 # attached to subs
 $opt_A = "switch -A";
+$opt_G = "switch -G";
 
 my $subcontrol = cmdlOrder->new(\%subhash, \@ARGVORIG);
 
-print "opt_a = $opt_a opt_d = $opt_d opt_A = $opt_A opt_t = $opt_t\n";
+print "opt_A = $opt_A\n" if $opt_A;
+print "opt_G = $opt_G\n" if $opt_G;
+print "opt_t = $opt_t\n" if $opt_t;
+print "opt_a = $opt_a\n" if $opt_a;
+print "opt_d = $opt_d\n" if $opt_d;
+print "opt_l = $opt_l\n" if $opt_l;
+print "opt_i = $opt_i\n" if $opt_i;
+print "opt_D = $opt_D\n" if $opt_D;
+print "opt_f = $opt_f\n" if $opt_f;
+print "opt_s = $opt_s\n" if $opt_s;
+print "opt_w = $opt_w\n" if $opt_w;
+print "opt_I = $opt_I\n" if $opt_I;
+print "opt_V = $opt_V\n" if $opt_V;
+print "opt_B = $opt_B\n" if $opt_B;
+print "opt_h = $opt_h\n" if $opt_h;
 
+
+exit 0;
 # create the editor instance
 if ($opt_f) {
 	# turn on debugging in StEdit.pm

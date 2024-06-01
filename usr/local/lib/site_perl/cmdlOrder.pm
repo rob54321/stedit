@@ -21,40 +21,90 @@ use warnings;
 #
 my $refhash;
 
+# ref to array containing command line switches
+my $refswlist;
+
 #######################################################
-# constructor setups up hash reference
+# constructor registers hash reference
+# and command line parameters and 
+# sets all global vars $opt_switch associated
+# with switches but not with subs.
+# this is done as some switches must be
+# set before any methods are executed.
+# parameters: ref to hash of switches and subs
+#             ref to array of command line parameters
 #######################################################
 sub new {
+	print "invoking cmdlOrder->new()\n";
 	# get parameters
 	# there must be 2 parameters
-	die "A reference to a hash containing switch => ref to sub must be provided\n" unless scalar(@_) >= 2;
+	die "ref to hash with switches/subs and ref to command line array required\n" unless scalar(@_) >= 3;
 	my $class = shift @_;
 
 	# get ref to hash
 	$refhash = shift @_;
 	
+	# get ref to command line array of switches
+	$refswlist = shift @_;
 	
+	# set all switches to their values unless they are associated with a sub
+	# if a switch has a parameter, $opt_switch = parameter value
+	# else $opt_switch = "null" to indicate no parameter
+	# and it is on the command line
+	# for all items in cmd line list
+	for (my $i=0; $i<scalar(@$refswlist); $i++) {
+		# check that it is a switch
+		my $switch = $refswlist->[$i];
+		
+		if ($switch=~ /^-/) {
+			# this is a switch
+			# check if it is valid
+			if (exists($refhash->{$switch})) {
+				# switch is valid
+				# check if a sub is associated
+				if ($refhash->{$switch}->[0] == 0) {
+					# valid switch not associated with sub
+					# the switch must be set to parameter value
+					# or null if there is no parameter
+					# don't move past end of list
+					if ($i < scalar(@$refswlist) - 1 and $refswlist->[$i+1] !~ /^-/) {
+						# valid switch with a parameter
+						# set the value
+						${$refhash->{$switch}->[1]} = $refswlist->[$i+1];
+						print "$switch: ${$refhash->{$switch}->[1]}\n";
+						
+						# switch might be the last on the line
+					} elsif ($i < scalar(@$refswlist) and $refswlist->[$i] =~ /^-/) {
+						# this is a switch with no parameter
+						${$refhash->{$switch}->[1]} = "null";
+						print "$switch: ${$refhash->{$switch}->[1]}\n";
+					} else {
+						# code should never get here
+						print "line 80: Error: switch: $switch\ni: $i\n";
+					}
+				}
+			} else {
+				# switch does not exist
+				print "$refswlist->[$i] is invalid\n";
+			}
+		}
+	}
+
 	# make class into an object
 	my $self = {};
 	bless $self, $class;
 	return $self;	
 }	 
 
-######################################################
 # method to invoke subs with parameters
 # following command line order
-# parameters : string for cmdl switches with parameters
+# parameters : none
 # return: nothing
 ######################################################
 sub execsub {
-	# check no of parameters passed
-	die "The cmdl string with switches and parameters must be passed to this method\n" if scalar(@_) < 2;
-
 	# get parameters
 	my $self = shift @_;
 
-	# ref to cmdl array of switches
-	my $refsw = shift @_;
 	# general ref to subs
 	# to be invoked
 	my $refsub;
@@ -64,16 +114,16 @@ sub execsub {
 	my @execsublist = ();
 	
 	# invoke subs from cmdl switches
-	for (my $i=0; $i<scalar(@$refsw); $i++) {
+	for (my $i=0; $i<scalar(@$refswlist); $i++) {
 		# get sub ref if parameter is a switch
 		# if it is not a switch, it must be
 		# a parameter to the previous switch
-		if ($refsw->[$i] =~ /^-/) {
+		if ($refswlist->[$i] =~ /^-/) {
 			# check if the switch (key) exists in the hash
 			# print and error message if not
 			# refhash is ref to hash $refhash = {switch => [reftosub/0, global var $opt_switch = 1/parameter]}
 			# variable for switch
-			my $switch = $refsw->[$i];
+			my $switch = $refswlist->[$i];
 			
 			if (exists($refhash->{$switch})) {
 				$refsub = $refhash->{$switch}->[0];
@@ -93,16 +143,16 @@ sub execsub {
 				# if next cmdl option is not
 				# a switch, it must be a parameter
 				# do not go past the end of the list
-				if ($i < scalar(@$refsw)) {
+				if ($i < scalar(@$refswlist)) {
 					# check if next item is a switch or parameter
-					if ($i < scalar(@$refsw) - 1 and $refsw->[$i+1] !~ /^-/) {
+					if ($i < scalar(@$refswlist) - 1 and $refswlist->[$i+1] !~ /^-/) {
 						# this is the parameter for the previous switch
 						
 						
 						# add sub ref to list for invokation
 						# unless the reference is 0
 						if ($refsub != 0) {
-							print "switch = $switch: refsub = $refsub: parameter = $refsw->[$i+1]\n";
+							print "switch = $switch: refsub = $refsub: parameter = $refswlist->[$i+1]\n";
 							push @execsublist, $refsub;
 						
 							# push the switch to the next value
@@ -110,23 +160,23 @@ sub execsub {
 
 							# add to list to exectute all subs
 							# push the parameter
-							push @execsublist, $refsw->[$i+1];
+							push @execsublist, $refswlist->[$i+1];
                         } else {
 							# ref to sub is 0
 							# with parameter
-							print "switch = $switch: refsub = $refsub: parameter = $refsw->[$i+1]\n";
+							print "switch = $switch: refsub = $refsub: parameter = $refswlist->[$i+1]\n";
 						}
 
 						# set associated ref to $opt_switch in hash to the value
 						# of the parameter
-						${$refhash->{$switch}->[1]} = $refsw->[$i+1];
+						${$refhash->{$switch}->[1]} = $refswlist->[$i+1];
 
 						# increase i
 						$i++;
 					} else {
 						# there is no parameter
 						# this could also be the last switch
-						# the switch is still $refsw->[$i]
+						# the switch is still $refswlist->[$i]
 
 						# add to execsublist only if ref != 0
 						if ($refsub != 0) {
@@ -152,7 +202,7 @@ sub execsub {
 				}
 			} else {
 				# print message show not a valid switch
-				print "Invalid switch: $refsw->[$i]\n";
+				print "Invalid switch: $refswlist->[$i]\n";
 			}
 					
 		}

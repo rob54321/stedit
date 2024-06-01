@@ -11,7 +11,7 @@
 
 use strict;
 use warnings;
-# use lib "/mnt/ad64/stedit/usr/local/lib/site_perl";
+use lib "/home/robert/stedit/usr/local/lib/site_perl";
 use StEdit;
 use cmdlOrder;
 # use Getopt::Std;
@@ -26,6 +26,8 @@ my $editor;
 # appear here
 my %subhash = (-a => [\&append,  \$opt_a],
                -d => [\&delete,  \$opt_d],
+               -f => [0,         \$opt_f],
+               -h => [0,         \$opt_h],
                -i => [\&insert,  \$opt_i],
                -l => [\&display, \$opt_l],
                -s => [\&subst,   \$opt_s],
@@ -33,6 +35,8 @@ my %subhash = (-a => [\&append,  \$opt_a],
                -w => [\&write,   \$opt_w],
                -A => [0,         \$opt_A],
                -B => [0,         \$opt_B],
+			   -D => [0,         \$opt_D],
+			   -V => [0,         \$opt_V],
                -G => [0,         \$opt_G],
                -I => [0,         \$opt_I]);
 
@@ -207,7 +211,7 @@ defaultparameter;
 
 # getopts deletes ARGV, so save
 # so it can be used for debugging
-my @ORIGARGV = @ARGV;
+my @ARGVORIG = @ARGV;
 
 # set default parameter for 
 # getopts ("ad:f:hi:ls:t:w:ABDGIV");
@@ -233,13 +237,22 @@ if ($opt_D) {
 
 # for debugging
 do {
-	print "no of arguments " . scalar(@ORIGARGV) . "\n";
-	foreach my $arg (@ORIGARGV) {
+	print "no of arguments " . scalar(@ARGVORIG) . "\n";
+	foreach my $arg (@ARGVORIG) {
 		print "param: " . $arg . ":\n";
 	}
 	print "#################\n";
 } if $DEBUG;
 
+$opt_f = "/home/robert/file1.txt";
+
+# create instance and initialise switches not
+# attached to subs
+$opt_A = "switch -A";
+
+my $subcontrol = cmdlOrder->new(\%subhash, \@ARGVORIG);
+
+print "opt_a = $opt_a opt_d = $opt_d opt_A = $opt_A opt_t = $opt_t\n";
 
 # create the editor instance
 if ($opt_f) {
@@ -254,7 +267,3 @@ if ($opt_f) {
 # exectute the subs in order of the command
 # line switches. Switches not associated with subs
 # are parsed first, then subs are executed
-my $subcontrol = cmdlOrder->new(\%subhash);
-
-# execute the subs
-$subcontrol->execsub(\@ARGV);

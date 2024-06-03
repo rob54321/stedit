@@ -16,29 +16,44 @@ use StEdit;
 use cmdlOrder;
 # use Getopt::Std;
 
-our ($opt_a, $opt_D, $opt_d, $opt_f, $opt_h, $opt_i, $opt_l, $opt_s, $opt_t, $opt_w, $opt_A, $opt_B, $opt_G, $opt_I, $opt_V);
+our ($opt_a, $opt_d, $opt_f, $opt_h, $opt_i, $opt_l, $opt_s, $opt_w, $DEBUG, $opt_V);
 # editor object of StEdit.pm
 my $editor;
 
+# subcontrol object
+my $subcontrol;
+
+# turn debugging off by default
+$DEBUG = 0;
+
+###############################################################
+# command line switches for stedit.pl
+# -a text to be appended
+# -d /pattern/i i delete line    - i case insensitive match
+# -f file name to edit           - must be given
+# -i /pattern/text to insert/iab - i case insensitive match, a|b insert after|before line
+# -l display buffer
+# -s /pattern/replacement/ig     - i case insensitive match, g sust globally
+# -w file name|default write     - default is to use the same file name as source
+# -V version and exit
+# -D turn debugging on
+###############################################################
+
 # main hash for cmdlOrder.pm
-# only the switches that need
-# to ordered according to command line
-# appear here
+# all switches are set by cmdlOrder->new()
+# if the sub is not to be invoked
+# set the sub ref to 0 followed by ref
+# to the global var
 my %subhash = (-a => [\&append,  \$opt_a],
                -d => [\&delete,  \$opt_d],
                -f => [0,         \$opt_f],
-               -h => [0,         \$opt_h],
+			   -h => [0,         \$opt_h],
                -i => [\&insert,  \$opt_i],
                -l => [\&display, \$opt_l],
                -s => [\&subst,   \$opt_s],
-               -t => [0,         \$opt_t],
                -w => [\&write,   \$opt_w],
-               -A => [0,         \$opt_A],
-               -B => [0,         \$opt_B],
-			   -D => [0,         \$opt_D],
-			   -V => [0,         \$opt_V],
-               -G => [0,         \$opt_G],
-               -I => [0,         \$opt_I]);
+			   -D => [0,         \$DEBUG],
+			   -V => [0,         \$opt_V]);
 
 # delete function
 # delete a line(s) that match pattern
@@ -46,11 +61,8 @@ my %subhash = (-a => [\&append,  \$opt_a],
 # parameters passed: pattern, optional -i modifier
 # the -i modifier works with delete
 sub delete {
-	# delete may have modifier i
-	my $modi = "";
-	$modi = "i" if defined($opt_I);
 	# rc is no lines deleted or undefined if an error occurred.
-	my $count = $editor->delete($opt_d, $modi);
+	my $count = $editor->delete($opt_d);
 	print "stedit: Error deleting\n" unless defined($count);
 }
 
@@ -61,7 +73,7 @@ sub delete {
 # parameters passed: text from -t option
 # no modifiers work with append
 sub append {
-	my $rc = $editor->append($opt_t);
+	my $rc = $editor->append($opt_a);
 	print "stedit: Error appending to $opt_f\n" unless defined($rc);
 }
 
@@ -72,33 +84,16 @@ sub append {
 # stedit.pl modifiers -i case insensitive, -a insert after, -b insert before - default, work
 # parameters passed: pattern, text, optional modifiers
 sub insert {
-	# error if no text given
-	die "stedit: Insert error: no pattern/text given\n" unless $opt_t;
-
-	# check which modifiers given
-	my $modi = "";
-	$modi = "a"         if defined($opt_A);
-	$modi = $modi . "b" if defined($opt_B);
-	$modi = $modi . "i" if defined($opt_I);
-
 	# do insert, return from method is no of insertions
-	my $count = $editor->insert($opt_i, $opt_t, $modi);	
+	my $count = $editor->insert($opt_i);	
 	print "stedit: Error: inserting\n" unless defined($count);
 }
 
 # substitute a pattern with replacement text
 # parameters passed: pattern, text replacement, optional modifiers -i -g
 sub subst {
-	# error if no text replacement
-	die "stedit: Error: no text replacement given\n" unless $opt_t;
-
-	# check which modifiers given
-	my $modi = "";
-	$modi = "i" if defined($opt_I);
-	$modi = $modi . "g" if defined($opt_G);
-
 	# do the substitution
-	my $count = $editor->subst($opt_s, $opt_t, $modi);
+	my $count = $editor->subst($opt_s);
 	print "stedit: Error: substituting\n" unless defined($count);
 }
 
@@ -123,13 +118,13 @@ sub display {
 
 # usage function
 sub usage {
-	print "use ANSI-C quoting \$'...' for interpolation of \\n etc in text arguments\n";
-	print "stedit -f \"full pathname\" commands options\n";
-	print "-d (delete) \"pattern\" option -I case insensitive\n";
-	print "-a (append)             option -t \"text to append\" \n";
-	print "-i (insert) \"pattern\" options -t \"text\" -B (before: default) -A after: -I case insensitive\n";
-	print "-s (subst)  \"pattern\" options -t \"replacement\" -I case insensitive -G global\n";
-	print "-w (write)  \"new filename\"\n";
+	print "use ANSI-C quoting \$'...' for interpolation of \\n or \' etc in text arguments\n";
+	print "stedit -f \"full pathname\" optional DEBUG flag\n";
+	print "-d (delete) \"/pattern/i\"  - i for case insensitive search\n";
+	print "-a (append) \"text\"\n";
+	print "-i (insert) \"/pattern/text to insert/iab\" - -i case insensitive, a|b insert after|before\n";
+	print "-s (subst)  \"/pattern/replacement/ig\" -i case insensitive, g global\n";
+	print "-w (write)  \"new filename\"|default is original name if none given\n";
 	print "-l (list file)\n";
 	print "-D (turn debugging on)\n";
 	print "-V print version and exit\n";
@@ -140,9 +135,7 @@ sub usage {
 # this sub operates on the list @ARGV
 # all the switches in the ARGV list are checked to see if they have arguments
 # if they do not have arguments, the default arguments are inserted into ARGV
-# so that getopts will not fail.
-# no parameters are passed and none are returned.
-
+# this sub must must be invoked before command line processings
 sub defaultparameter {
 
 	# hash supplying default arguments to switches
@@ -197,21 +190,22 @@ sub defaultparameter {
 #             -h  (help)
 
 # check at least some arguments were given
-my $count = scalar(@ARGV);
-
-# invoke usage if no arguments given
-usage if $count == 0;
-
-
-# for debugging
-my $DEBUG = 0;
-
-# get default parameter for -w if none was given
-defaultparameter;
-
 # getopts deletes ARGV, so save
 # so it can be used for debugging
-my @ARGVORIG = @ARGV;
+my @cmdlargs = @ARGV;
+my $count = scalar(@cmdlargs);
+
+# set command line arguments
+$subcontrol = cmdlOrder->new(\%subhash, \@cmdlargs);
+
+# get default parameter for -w if none was given
+# this function must be invoked
+# before any command line processing
+defaultparameter;
+
+# invoke usage if no arguments given
+# or help switch
+usage if $count == 0 || $opt_h;
 
 # set default parameter for 
 # getopts ("ad:f:hi:ls:t:w:ABDGIV");
@@ -221,54 +215,46 @@ if ($opt_V) {
 	# print the installed version from dpkg-query
 	my $string = `dpkg-query -W stedit`;
 	my ($name, $version) = split /\s+/,$string;
-	print "Version: $version (installed version)\n";
+	if ($version) {
+		print "Version: $version (installed version)\n";
+	} else {
+		print "stedit is not installed\n";
+	}
 	exit 0;
 }
 
-# usage
-if ($opt_h) {
-	usage();
-}
-
-# if -D is given turn on debugging
-if ($opt_D) {
-	$DEBUG = 1;
-}
-
-# for debugging
 do {
-	print "no of arguments " . scalar(@ARGVORIG) . "\n";
-	foreach my $arg (@ARGVORIG) {
+	print "no of arguments " . scalar(@cmdlargs) . "\n";
+	foreach my $arg (@cmdlargs) {
 		print "param: " . $arg . ":\n";
 	}
 	print "#################\n";
 } if $DEBUG;
 
-# create instance and initialise switches not
-# attached to subs
-$opt_A = "switch -A";
-$opt_G = "switch -G";
-
-my $subcontrol = cmdlOrder->new(\%subhash, \@ARGVORIG);
-
-print "opt_A = $opt_A\n" if $opt_A;
-print "opt_G = $opt_G\n" if $opt_G;
-print "opt_t = $opt_t\n" if $opt_t;
+#####################################################
+# for testing
+# cmdlOrder->new() only sets the flags not
+# associated with subs
+# method cmdlOrder->execsub() will set a switch parameter
+# just before the sub is invoked
+#####################################################
+do {
+print "########### all flags, sub independent #####################\n";
 print "opt_a = $opt_a\n" if $opt_a;
 print "opt_d = $opt_d\n" if $opt_d;
-print "opt_l = $opt_l\n" if $opt_l;
-print "opt_i = $opt_i\n" if $opt_i;
-print "opt_D = $opt_D\n" if $opt_D;
 print "opt_f = $opt_f\n" if $opt_f;
+print "opt_h = $opt_h\n" if $opt_h;
+print "opt_i = $opt_i\n" if $opt_i;
+print "opt_l = $opt_l\n" if $opt_l;
 print "opt_s = $opt_s\n" if $opt_s;
 print "opt_w = $opt_w\n" if $opt_w;
-print "opt_I = $opt_I\n" if $opt_I;
+print "DEBUG = $DEBUG\n" if $DEBUG;
 print "opt_V = $opt_V\n" if $opt_V;
-print "opt_B = $opt_B\n" if $opt_B;
-print "opt_h = $opt_h\n" if $opt_h;
+print "##############################################\n";
+} if $DEBUG;
+#####################################################
 
 
-exit 0;
 # create the editor instance
 if ($opt_f) {
 	# turn on debugging in StEdit.pm
@@ -279,6 +265,3 @@ if ($opt_f) {
 	die "stedit: A file name must be specifed to edit\n";
 }
 
-# exectute the subs in order of the command
-# line switches. Switches not associated with subs
-# are parsed first, then subs are executed

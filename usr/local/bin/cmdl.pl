@@ -41,7 +41,6 @@ sub dumbfries {
 #         $opt_switch = parameter value | null in case where there no parameter
 #         a switch without a sub can have a parameter
 # $opt_switch is declared as our ($opt_switch)
-$opt_A = "switch A";
 
 my %subhash = ( -a => [\&another, \$opt_a],
                 -b => [\&brady, \$opt_b],

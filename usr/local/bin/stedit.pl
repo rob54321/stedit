@@ -180,11 +180,11 @@ sub defaultparameter {
 # usage stedit options command options
 # 1. -f filename to edit compulsory
 # 2. commands
-#             -d  (delete): "pattern"        options: -I case insensitive
-#             -a  (append):                  options: -t "text to append"
-#             -i  (insert): "pattern"        options: -t "text" -B before(default), -A after, -A case insensitive
-#             -s  (subst) : "pattern"        options: -t "replacement text" -I case insensitive, -G global
-#             -w  (write) : "optional new file name"
+#             -d  (delete): "/pattern/i"     options: i for case insensitive
+#             -a  (append): "text to append"
+#             -i  (insert): "/pattern/text to insert/iab" options i case insensitive, a|b insert after|before line       
+#             -s  (subst) : "/pattern/replacement/ig"     options i case insensitive, g global
+#             -w  (write) : "optional new file name"| nothing = current name
 #             -l  (list)  : 
 #             -V  print version and exit
 #             -h  (help)

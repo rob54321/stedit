@@ -66,6 +66,59 @@ sub new {
 	return $self;
 }
 
+
+####################################################
+# parsearg function:
+# argument is of form:
+# subs:     /pattern/resplacement/ig
+# delete:   /pattern/i
+# insert:   /pattern/text/iab
+# append:   text
+# strip off the / / 
+# parameters passed: 1. command name, s, d, i, a
+#                    2. argument string
+#                    3. ref to array for returning pattern, replacement, option1,...etc
+#                    
+# return:  for subs:      return ref to [pattern, replacement, options|none]
+#              delete:    return ref to [pattern, option|none ]
+#              insert:    return ref to [pattern, text, options|nothing]]
+#              append:    return ref to [text]
+#              options:   a variable length string like i or ig or ia or ib or a or b or nothing
+###################################################
+sub parsearg {
+	# Get parameters
+	my $cmd = shift @_;
+	my $arg = shift @_;
+	my $reflist = shift @_;
+	
+	# arg can only be of form
+	# /pattern/i or
+	# /pattern/text/abi
+	# /pattern/replacement/ig
+	# split the arg
+	my @list = split /\//,$arg;
+	
+	# remove first empty element
+	shift @list;
+	
+	# for each command
+	if ($cmd eq "d") {
+		# for delete command: arg is /pattern/i or /pattern/
+		$reflist->[0] = $list[0];
+		# copy options if there are any
+		$reflist->[1] = $list[1] if $list[1];
+	} elsif ($cmd eq "a") {
+		# for append command: arg is text
+		$reflist->[0] = $list[0];
+	} elsif ($cmd eq "i" or $cmd eq "s") {
+		# for insert or subs command: /pattern/text/ or /pattern/text/i|a|b|g or none
+		$reflist->[0] = $list[0];
+		$reflist->[1] = $list[1];
+		# if there are options
+		$reflist->[2] = $list[2] if $list[2];
+	}
+}
+
 # delete function
 # delete each line matching the pattern
 # if no pattern is given return an error
@@ -75,7 +128,7 @@ sub new {
 #   "string"
 #   "st\.\*ng"
 #   "\\bstring\$"
-# parameter: address pattern to match,optional modifier i
+# parameter: of form /pattern/i or /pattern/
 # if not i then it is "" = no modifier
 # return: no of lines deleted
 #         undefined on error
@@ -88,24 +141,18 @@ sub delete {
 	
 	my $self = shift;
 
-	# there must be 2 or 3 parameters
-	# if there is no address pattern - return error
-	# get parameters
-	# 2 parameters means pattern address but no pattern modifier
-	# 3 parameters means pattern address and pattern modifier
-	my $pattern;
-	my $modi;
+	# cmd line argument like /pattern/ or pattern/i
+	my $arg = shift @_;
+	
+	# parse the arg
+	my @list;
+	parsearg("d", $arg, \@list);
+	# $list[0] is pattern
+	# $list[1] is option i if it was given on the cmdline
+	my $pattern = $list[0];
+	my $option;
+	$option = $list[1] if $list[1];
 
-	# get parameters
-	$_ = $count;
-	SWITCH: {
-		/^2/ && do {$pattern = shift; $modi = ""; last SWITCH;};
-		/^3/ && do {$pattern = shift; $modi = shift; unless ($modi eq "i" or $modi eq "") {
-							             warn "delete: Invalid modifier $modi";
-								     return;} last SWITCH;};
-		warn "delete error: $count parameters passed"; return;
-	}
-	# debug print parameters
 	# delete all lines that match address
 	# if address is "" then delete all lines
 	# copy non matching lines to new array
@@ -117,10 +164,10 @@ sub delete {
 	$count = 0;
 
 	# for debug
-	push @debug, "pattern = $pattern ; modifier = $modi\n" if $DEBUG;
+	push @debug, "arg = $arg\n;" if $DEBUG;
 	
 	# if modifier is i
-	if ($modi eq "i") {
+	if ($option eq "i") {
 		foreach my $line (@efile) {
 			# case insensitive pattern
 			if ($line =~ /$pattern/i) {

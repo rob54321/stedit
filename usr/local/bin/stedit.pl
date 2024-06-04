@@ -265,3 +265,5 @@ if ($opt_f) {
 	die "stedit: A file name must be specifed to edit\n";
 }
 
+# execute the subs in StEdit.pm
+$subcontrol->execsub();

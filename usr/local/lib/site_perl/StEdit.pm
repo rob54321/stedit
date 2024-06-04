@@ -87,6 +87,7 @@ sub new {
 ###################################################
 sub parsearg {
 	# Get parameters
+	my $self = shift @_;
 	my $cmd = shift @_;
 	my $arg = shift @_;
 	my $reflist = shift @_;
@@ -96,11 +97,29 @@ sub parsearg {
 	# /pattern/text/abi
 	# /pattern/replacement/ig
 	# split the arg
-	my @list = split /\//,$arg;
+	# note: the arg for append and delete may not have the leading and trailing slash
+	# the subs and insert commands must have three slashes /pattern/text/options
 	
-	# remove first empty element
-	shift @list;
+	# list to store components of the argument
+	my @list;
 	
+	if ($cmd eq "a" || $cmd eq "d") {
+		# append and delete may or may not have slashes
+		# around argument
+		# if there are no slashes, there can be no options
+		# make sure there are no groups of 2 or more / together
+		if ($arg =~ /^\/.*\// and $arg !~ /\/{2,}/) {
+			# arg of form /pattern/
+			@list = split /\//,$arg;
+			# remove first empty element
+			shift @list;
+		} elsif ($arg !~ /\/{2,}/) {
+			# groups of 2 or more / togehter
+			# die
+			die "The arg $arg contains groups of 2 or more \/ together\n";
+		}
+	}
+
 	# for each command
 	if ($cmd eq "d") {
 		# for delete command: arg is /pattern/i or /pattern/
@@ -111,6 +130,10 @@ sub parsearg {
 		# for append command: arg is text
 		$reflist->[0] = $list[0];
 	} elsif ($cmd eq "i" or $cmd eq "s") {
+		# check that format of arg is /pattern/text/options|none
+		# die if there are 2 or more / together or if there are no /
+		die "the format of arg $arg is wrong should be \/pattern\/text\/options|none\n" if ($arg !~ /^\/.*\/.*\// or $arg =~ /\/{2,}/);
+		
 		# for insert or subs command: /pattern/text/ or /pattern/text/i|a|b|g or none
 		$reflist->[0] = $list[0];
 		$reflist->[1] = $list[1];
@@ -136,9 +159,6 @@ sub delete {
 	# for debug
 	my @debug = ("***Delete***\n") if $DEBUG;
 	
-	# get the no of parameters passed
-	my $count = scalar (@_);
-	
 	my $self = shift;
 
 	# cmd line argument like /pattern/ or pattern/i
@@ -146,7 +166,7 @@ sub delete {
 	
 	# parse the arg
 	my @list;
-	parsearg("d", $arg, \@list);
+	$self->parsearg("d", $arg, \@list);
 	# $list[0] is pattern
 	# $list[1] is option i if it was given on the cmdline
 	my $pattern = $list[0];
@@ -161,13 +181,13 @@ sub delete {
 	my @temparray = ();
 
 	# reset count for no of lines deleted.
-	$count = 0;
+	my $count = 0;
 
 	# for debug
 	push @debug, "arg = $arg\n;" if $DEBUG;
-	
+
 	# if modifier is i
-	if ($option eq "i") {
+	if (defined($option) and $option eq "i") {
 		foreach my $line (@efile) {
 			# case insensitive pattern
 			if ($line =~ /$pattern/i) {

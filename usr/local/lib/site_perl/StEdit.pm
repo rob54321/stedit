@@ -241,6 +241,7 @@ sub delete {
 	return $count;
 }
 
+################################################################################
 # sub to subsitute in each line of the file
 # parameters: 1. pattern
 #             2. replacement
@@ -248,71 +249,77 @@ sub delete {
 # if no modifier given or a bad one, set $modi = "" = no modifier
 # return: no of subsitutions
 #         undefined on error
+################################################################################
 sub subst {
 	# for debug
 	my @debug = ("##################### StEdit->subst()#####################\n") if $DEBUG;
-	
-	# no of parameters passed
-	my $count = scalar (@_);
 
-	# there must be 4 or 3 parameters passed
+	# there must be 2 parameters passed
 	my $self = shift;
-	my $patt;
-	my $repl;
-	my $modi;
-	$_ = $count;
-	
-	# get parameters
-	SWITCH: {
-		/^3/ && do {$patt = shift; $repl = shift; $modi = ""; last SWITCH;};
-		/^4/ && do {$patt = shift; $repl = shift; $modi = shift; unless ($modi =~ /^i$|^g$|^ig$|^gi$/ or $modi eq "") {
-										# invalid modifier
-										warn "subst: Invalid modifier $modi";
-										return;} last SWITCH;};
-		warn "susbst error: $count parameters passed"; return;
-	}
+	my $arg;
+
+	# list for all argument components
+	# $list[0] = pattern
+	# $list[1] = replacement
+	# $list[2] = modiefies i or g or ig or gi or undef
+	my @list;
+
+	# parse argument
+	$self->parsearg("s", $arg, \@list);
 
 	# for debug
-	push @debug, "pattern = $patt : replacement = $repl : modifier = $modi\n" if $DEBUG;
+	do {
+		if ($list[2]) {
+			push @debug, "pattern = $list[0] : replacement = $list[1] : modifier = $list[2]\n";
+		} else {
+			push @debug, "pattern = $list[0] : replacement = $list[1] : no modifiers\n";
+		}
+	} if $DEBUG;
 	
 	# the modifier can be
 	# i - case insensitive
 	# g - global search in line
 	# not just first occurence
 	# search each line
-	$count = 0;
+	my $count = 0;
 	my $noofmatches;
 	# substitutions depend on the modifier
 	# "" means no modifier
 
 	# for debugging
 	my $oldline if $DEBUG;
-	if ($modi eq "g") {
+
+	# modi could be i or g or ig or gi or nothing
+	my $modi = $list[2] if $list[2];
+	if (defined($modi) and $modi eq "g") {
+		# modifier = g
 		foreach my $line (@efile) {
 			# for debug
 			$oldline = $line if $DEBUG;
-			$noofmatches = $line =~ s/$patt/$repl/g;
+			$noofmatches = $line =~ s/$list[0]/$list[1]/g;
 			#for debug
 			push @debug, "old: $oldline\nnew: $line\n" if $DEBUG and ($noofmatches > 0);
 			
 			# add up matches
 			$count = $count + $noofmatches;
 		}
-	} elsif ($modi eq "i") {
+	} elsif (defined($modi) and $modi eq "i") {
+		# modifier = i
 		foreach my $line (@efile) {
 			# for debug
 			$oldline = $line if $DEBUG;
-			$noofmatches = $line =~ s/$patt/$repl/i;
+			$noofmatches = $line =~ s/$list[0]/$list[1]/i;
 			#for debug
 			push @debug, "old: $oldline\nnew: $line\n" if $DEBUG and ($noofmatches > 0);
 			
 			$count = $count + $noofmatches;
 		}
-	} elsif ($modi =~ /i/ and $modi =~ /g/) {
+	} elsif (defined($modi) and ($modi =~ /i/ and $modi =~ /g/)) {
+		# modifier = ig
 		foreach my $line (@efile) {
 			# for debug
 			$oldline = $line if $DEBUG;
-			$noofmatches = $line =~ s/$patt/$repl/ig;
+			$noofmatches = $line =~ s/$list[0]/$list[1]/ig;
 			#for debug
 			push @debug, "old: $oldline\nnew: $line\n" if $DEBUG and ($noofmatches > 0);
 			
@@ -320,10 +327,11 @@ sub subst {
 		}
 
 	} else {
+		# no modifier
 		foreach my $line (@efile) {
 			# for debug
 			$oldline = $line if $DEBUG;
-			$noofmatches = $line =~ s/$patt/$repl/;
+			$noofmatches = $line =~ s/$list[0]/$list[1]/;
 			#for debug
 			push @debug, "old: $oldline\nnew: $line\n" if $DEBUG and ($noofmatches > 0);
 			
@@ -366,6 +374,8 @@ sub append {
 		warn "append error: $count parameters passed";
 		return;
 	}
+
+	# get arguments
 	my $self = shift;
 	my $arg = shift;
 

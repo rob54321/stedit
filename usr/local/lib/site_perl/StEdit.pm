@@ -267,12 +267,16 @@ sub subst {
 	# parse argument
 	$self->parsearg("s", $arg, \@list);
 
+	# use nice var names
+	my $pattern = $list[0];
+	my $replacement = $list[1];
+	my $modi = $list[2] if $list[2];
 	# for debug
 	do {
-		if ($list[2]) {
-			push @debug, "pattern = $list[0] : replacement = $list[1] : modifier = $list[2]\n";
+		if ($modi) {
+			push @debug, "pattern = $pattern : replacement = $replacement : modifier = $modi\n";
 		} else {
-			push @debug, "pattern = $list[0] : replacement = $list[1] : no modifiers\n";
+			push @debug, "pattern = $pattern : replacement = $replacement : no modifiers\n";
 		}
 	} if $DEBUG;
 	
@@ -290,13 +294,12 @@ sub subst {
 	my $oldline if $DEBUG;
 
 	# modi could be i or g or ig or gi or nothing
-	my $modi = $list[2] if $list[2];
 	if (defined($modi) and $modi eq "g") {
 		# modifier = g
 		foreach my $line (@efile) {
 			# for debug
 			$oldline = $line if $DEBUG;
-			$noofmatches = $line =~ s/$list[0]/$list[1]/g;
+			$noofmatches = $line =~ s/$pattern/$replacement/g;
 			#for debug
 			push @debug, "old: $oldline\nnew: $line\n" if $DEBUG and ($noofmatches > 0);
 			
@@ -308,7 +311,7 @@ sub subst {
 		foreach my $line (@efile) {
 			# for debug
 			$oldline = $line if $DEBUG;
-			$noofmatches = $line =~ s/$list[0]/$list[1]/i;
+			$noofmatches = $line =~ s/$pattern/$replacement/i;
 			#for debug
 			push @debug, "old: $oldline\nnew: $line\n" if $DEBUG and ($noofmatches > 0);
 			
@@ -319,7 +322,7 @@ sub subst {
 		foreach my $line (@efile) {
 			# for debug
 			$oldline = $line if $DEBUG;
-			$noofmatches = $line =~ s/$list[0]/$list[1]/ig;
+			$noofmatches = $line =~ s/$pattern/$replacement/ig;
 			#for debug
 			push @debug, "old: $oldline\nnew: $line\n" if $DEBUG and ($noofmatches > 0);
 			
@@ -331,7 +334,7 @@ sub subst {
 		foreach my $line (@efile) {
 			# for debug
 			$oldline = $line if $DEBUG;
-			$noofmatches = $line =~ s/$list[0]/$list[1]/;
+			$noofmatches = $line =~ s/$pattern/$replacement/;
 			#for debug
 			push @debug, "old: $oldline\nnew: $line\n" if $DEBUG and ($noofmatches > 0);
 			
@@ -406,6 +409,7 @@ sub append {
 
 #######################################################################
 # sub to insert a line after/before a line
+# only invoked by StEdit->insert(). Not called by the user
 # parameters: 1. ref to line
 #             2. ref to text to insert
 #             3. ref to temparray

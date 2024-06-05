@@ -114,6 +114,14 @@ sub parsearg {
 			# remove first empty element
 			shift @list;
 		}
+	} elsif ($cmd eq "i" || $cmd eq "s") {
+		# subs and insert have arg /pattern/text/options or none
+		# retrieve the arguments
+		if ($arg =~ /^\/.*\/.*\// and $arg !~ /\/{2,}/) {
+			@list = split /\//, $arg;
+			# remove first empty element
+			shift @list;
+		}
 	}
 
 	# print all arguments form @list
@@ -256,7 +264,7 @@ sub subst {
 
 	# there must be 2 parameters passed
 	my $self = shift;
-	my $arg;
+	my $arg = shift;
 
 	# list for all argument components
 	# $list[0] = pattern
@@ -575,9 +583,11 @@ sub display {
 	my $self = shift;
 
 	# print each line
+	print "##################### $fname /#######################\n";
 	foreach my $line (@efile) {
 		print "$line\n";
 	}
+	print "#####################################################\n\n";
 }
 # this is the last line of the module and must be here
 1;

@@ -63,7 +63,6 @@ my %subhash = (-a => [\&append,  \$opt_a],
 sub delete {
 	# rc is no lines deleted or undefined if an error occurred.
 	my $count = $editor->delete($opt_d);
-	print "stedit: Error deleting\n" unless defined($count);
 }
 
 # if append given
@@ -224,11 +223,12 @@ if ($opt_V) {
 }
 
 do {
+	print "############### stedit.pl ########################\n";
 	print "no of arguments " . scalar(@cmdlargs) . "\n";
 	foreach my $arg (@cmdlargs) {
-		print "param: " . $arg . ":\n";
+		print "param: " . $arg . "\n";
 	}
-	print "#################\n";
+	print "##################################################\n\n";
 } if $DEBUG;
 
 #####################################################
@@ -239,7 +239,7 @@ do {
 # just before the sub is invoked
 #####################################################
 do {
-print "########### all flags, sub independent #####################\n";
+print "########### stedit.pl all flags, function independent #####################\n";
 print "opt_a = $opt_a\n" if $opt_a;
 print "opt_d = $opt_d\n" if $opt_d;
 print "opt_f = $opt_f\n" if $opt_f;
@@ -250,7 +250,7 @@ print "opt_s = $opt_s\n" if $opt_s;
 print "opt_w = $opt_w\n" if $opt_w;
 print "DEBUG = $DEBUG\n" if $DEBUG;
 print "opt_V = $opt_V\n" if $opt_V;
-print "##############################################\n";
+print "##############################################\n\n";
 } if $DEBUG;
 #####################################################
 

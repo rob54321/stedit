@@ -1,6 +1,6 @@
 package cmdlOrder;
 
-# this is class that makes the order of execution
+# this is a class that makes the order of execution
 # of subs the same as the order given on the commandline.
 # a switch -a will invoke a sub which is registered in the hash
 # if the parameter following -a on command line is not another switch

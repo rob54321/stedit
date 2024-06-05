@@ -113,12 +113,21 @@ sub parsearg {
 			@list = split /\//,$arg;
 			# remove first empty element
 			shift @list;
-		} elsif ($arg !~ /\/{2,}/) {
-			# groups of 2 or more / togehter
-			# die
-			die "The arg $arg contains groups of 2 or more \/ together\n";
 		}
 	}
+
+	# print all arguments form @list
+	do {
+		print "################StEdit->parsearg()######################\n";
+		print "command $cmd: no of \@list args ". scalar(@list) . "\n";
+		for (my $i=0; $i<scalar(@list); $i++) {
+			print "list[$i]: $list[$i]\n" if $list[$i];
+		}
+		print "################################################\n\n";
+	} if $DEBUG;
+	
+	# check that the arg is not mal formed
+	die "StEdit->parsarg(): The arg = $arg for command $cmd is malformed\n" if scalar(@list) == 0 or ! defined($list[0]);
 
 	# for each command
 	if ($cmd eq "d") {
@@ -157,7 +166,7 @@ sub parsearg {
 #         undefined on error
 sub delete {
 	# for debug
-	my @debug = ("***Delete***\n") if $DEBUG;
+	my @debug = ("################# StEdit->delete() ####################\n") if $DEBUG;
 	
 	my $self = shift;
 
@@ -184,7 +193,7 @@ sub delete {
 	my $count = 0;
 
 	# for debug
-	push @debug, "arg = $arg\n;" if $DEBUG;
+	push @debug, "arg = $arg\n" if $DEBUG;
 
 	# if modifier is i
 	if (defined($option) and $option eq "i") {
@@ -226,7 +235,7 @@ sub delete {
 		foreach my $item (@debug) {
 			print "$item";
 		}
-		print "###########\n";
+		print "##################################\n\n";
 	}
 
 	return $count;
@@ -241,7 +250,7 @@ sub delete {
 #         undefined on error
 sub subst {
 	# for debug
-	my @debug = ("***Subst***\n") if $DEBUG;
+	my @debug = ("##################### StEdit->subst()#####################\n") if $DEBUG;
 	
 	# no of parameters passed
 	my $count = scalar (@_);
@@ -337,13 +346,15 @@ sub subst {
 	return $count;
 }
 
+###########################################################################
 # method to append a string to the end of a file
 # parameters: 1 the string to be appended
 # return: 1 on success
 #         undefined on error
+##########################################################################
 sub append {
 	# for debug
-	my @debug = ("***Append***\n") if $DEBUG;
+	my @debug = ("######################## StEdit->append()########################\n") if $DEBUG;
 	
 	#get parameters
 	my $count = scalar(@_);
@@ -356,18 +367,27 @@ sub append {
 		return;
 	}
 	my $self = shift;
-	my $text = shift;
+	my $arg = shift;
 
+	# for debug
+	push @debug, "text = $arg\n" if $DEBUG;
+	
+	# list for parsed arguments
+	my @list;
+
+	# parse the arg list
+	$self->parsearg("a", $arg, \@list);
+	
 	# append the string to the efile array
 	# string can be : something\nnew line\n\tnew line again\n\tetc
-	push @efile, $text;
-	# for debug
+	push @efile, $list[0];
+
 	# for debug
 	if ($DEBUG) {
 		foreach my $item (@debug) {
 			print "$item";
 		}
-		print "###########\n";
+		print "#############################################\n\n";
 	}
 
 	

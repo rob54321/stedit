@@ -159,19 +159,14 @@ sub parsearg {
 	}
 }
 
+####################################################################
 # delete function
 # delete each line matching the pattern
-# if no pattern is given return an error
-# addr is of form:
-#   "^string"
-#   "string\$"
-#   "string"
-#   "st\.\*ng"
-#   "\\bstring\$"
 # parameter: of form /pattern/i or /pattern/
-# if not i then it is "" = no modifier
+# the modifier is optional
 # return: no of lines deleted
 #         undefined on error
+###################################################################
 sub delete {
 	# for debug
 	my @debug = ("################# StEdit->delete() ####################\n") if $DEBUG;
@@ -251,10 +246,7 @@ sub delete {
 
 ################################################################################
 # sub to subsitute in each line of the file
-# parameters: 1. pattern
-#             2. replacement
-#             3, modifier i or g or ig or gi - optional
-# if no modifier given or a bad one, set $modi = "" = no modifier
+# parameters: 1. arg /pattern/replacement/ig or any combination of modifiers
 # return: no of subsitutions
 #         undefined on error
 ################################################################################
@@ -364,7 +356,7 @@ sub subst {
 
 ###########################################################################
 # method to append a string to the end of a file
-# parameters: 1 the string to be appended
+# parameters: 1 arg eg /text/
 # return: 1 on success
 #         undefined on error
 ##########################################################################
@@ -412,14 +404,22 @@ sub append {
 	return 1;
 }
 
+#######################################################################
 # sub to insert a line after/before a line
 # parameters: 1. ref to line
-#             2. ref to text
+#             2. ref to text to insert
 #             3. ref to temparray
-#             4. modifier a or b
+#             4. modifier a or b , after or before for insert
 # return: nothing
+#######################################################################
 sub insertline {
+
 	# get parameters
+	# ref to self
+	# ref to line
+	# ref to text
+	# ref to temparray
+	# modifiers
 	my $self = shift;
 	my $rline = shift;
 	my $rtext = shift;
@@ -430,7 +430,7 @@ sub insertline {
 	my $dline if $DEBUG;
 	
 	# insert
-	if ($modi =~ /a/) {
+	if (defined($modi) and $modi =~ /a/) {
 		# insert text after a line
 		push @{$rtemparray}, ${$rline};
 		push @{$rtemparray}, ${$rtext};
@@ -448,6 +448,7 @@ sub insertline {
 	print "$dline" if $DEBUG;
 	return;
 }
+#################################################################
 # method to insert a string(s) in a file
 # after or before a certain line.
 # the default is insert before a line
@@ -455,52 +456,49 @@ sub insertline {
 #                                 b before match
 #                                 a after match
 # parameters
-#   1. pattern to match
-#   2. text to be inserted
-#   3. modifiers 
-#      i for case insensitive
-#      b before match
-#      a after match
+#   1. arg eg /pattern/text/iab modifiers or none
 # return: undefined on error
 #          count  on success
 #          0  on match not found
+################################################################
 sub insert {
 	# for debug
-	my @debug = ("***Insert***\n") if $DEBUG;
+	my @debug = ("################## StEdit->inser()t #########################\n") if $DEBUG;
 	
 	# get parameters
-	my $count = scalar(@_);
 	my $self = shift;
-	my $pattern;
-	my $text;
-	my $modi;
+	my $arg = shift;
+	
+	# list for components of arg
+	my @list;
+	
+	# parse arguments
+	$self->parsearg("i", $arg, \@list);
+	
+	my $pattern = $list[0];
+	my $text = $list[1];
+	
+	# modifier could be i or a or b or ia or ib or nothing but not ab together
+	my $modi = $list[2] if $list[2];
 	my @temparray = ();
 	
-	# set the vars depending on how many parameters were passed
-	# the modifier can be i a b. any combination of ab is invalid
-	# and returned on error.
-	$_ = $count;
-	SWITCH: {
-		/^3/ && do { $pattern = shift; $text = shift; $modi = ""; last SWITCH;};
-
-		/^4/ && do { $pattern = shift; $text = shift; $modi = shift;
-				# if modi does not contain a valid modifier
-				unless ($modi =~ /^i$|^b$|^a$|^ib$|^bi$|^ia$|^ai$/ or $modi eq "") {
-					warn "insert: Invalid modifier $modi";
-					return;} last SWITCH;};
-		warn "insert error: $count parameters supplied"; return;
+	# if modi contains valid modifiers
+	if ($modi) {
+		unless ($modi =~ /^i$|^b$|^a$|^ib$|^bi$|^ia$|^ai$/ or $modi eq "") {
+			die "StEdit->insert(): Invalid modifier $modi";
+		}
 	}
 
-	push @debug, "count = $count: pattern = $pattern: modi = $modi\n" if $DEBUG;
+	push @debug, "pattern = $pattern: modi = $modi\n" if $DEBUG;
 
 	# insert text before/after case (in) sensitive to each matching line.
 	# for all elements in list
 	# no of insertions
-	$count = 0;
+	my $count = 0;
 	foreach my $line (@efile) {
 		# copy each line that does not match to temparray
 		# when line matches insert before/after line in temparray
-		if ($modi =~ /i/) {
+		if (defined($modi) and $modi =~ /i/) {
 			# check for match
 			if ($line !~ /$pattern/i) {
 				# no match , copy line
@@ -539,7 +537,7 @@ sub insert {
 		foreach my $item (@debug) {
 			print "$item";
 		}
-		print "###########\n";
+		print "###########################\n";
 	}
 
 	return $count;

@@ -162,8 +162,10 @@ sub parsearg {
 ####################################################################
 # delete function
 # delete each line matching the pattern
-# parameter: of form /pattern/i or /pattern/
-# the modifier is optional
+# parameter: of form /pattern/ie or /pattern/
+# the modifiers are optional
+# i - for case insensitive
+# e - delete line and following lines if they are empty
 # return: no of lines deleted
 #         undefined on error
 ###################################################################
@@ -199,30 +201,78 @@ sub delete {
 	push @debug, "arg = $arg\n" if $DEBUG;
 
 	# if modifier is i
-	if (defined($option) and $option eq "i") {
-		foreach my $line (@efile) {
-			# case insensitive pattern
-			if ($line =~ /$pattern/i) {
-				# DEBUG: print the line
-				push @debug, "deleted: $line\n" if $DEBUG;
-				# delete line and count it
-				$count++;
-			} else {
-				# keep line
-				push @temparray, $line;
+	if (defined($option)) {
+		if ($option =~ /i/) {
+			for (my $i=0; $i<scalar(@efile); $i++) {
+				# option i defined possibly e as well
+				# case insensitive pattern
+				if ($efile[$i] =~ /$pattern/i) {
+					# delete line by not pushing it to @temparray
+					# if modifier e given, delete following empty lines
+					if ($option =~ "e") {
+						# while lines are empty delete them
+						# by moving not pushing them.
+						# done by incrementing $i
+						# do not go past end of file
+						while ($i < scalar(@efile) - 1 and $efile[$i+1] =~ /^$/) {
+							# skip this line
+							$i++;
+							
+							# count the deleted lines
+							$count++;
+						}
+						# DEBUG: print the line
+						push @debug, "deleted: $efile[$i]\n" if $DEBUG;
+						# delete line and count it
+						$count++;
+					}
+				} else {
+					# keep line
+					push @temparray, $efile[$i];
+				}
+			}
+		} elsif ($option =~ /e/) {
+			for (my $i=0; $i<scalar(@efile); $i++) {
+				# option e define and not i
+				# case insensitive pattern
+				if ($efile[$i] =~ /$pattern/) {
+					# delete line by not pushing it to @temparray
+					# if modifier e given, delete following empty lines
+					# while lines are empty delete them
+					# by moving not pushing them.
+					# done by incrementing $i
+					# do not go past end of file
+					while ($i < scalar(@efile) - 1 and $efile[$i+1] =~ /^$/) {
+						# skip this line empty line due to modifier e
+						$i++;
+						
+						# count the deleted lines
+						$count++;
+					}
+					# DEBUG: print the line
+					push @debug, "deleted: $efile[$i]\n" if $DEBUG;
+					# delete line and count it
+					$count++;
+
+				} else {
+					# keep line
+					push @temparray, $efile[$i];
+				}
 			}
 		}
+
 	} else {
-		foreach my $line (@efile) {
+		# $option is not defined no i or e
+		for (my $i=0; $i<scalar(@efile); $i++) {
 			# case sensitive search
-			if ($line =~ /$pattern/) {
+			if ($efile[$i] =~ /$pattern/) {
 				# DEBUG: print the line
-				push @debug, "deleted: $line\n" if $DEBUG;
+				push @debug, "deleted: $efile[$i]\n" if $DEBUG;
 				# delete line and count it
 				$count++;
 			} else {
 				# keep line
-				push @temparray, $line;
+				push @temparray, $efile[$i];
 			}
 		}
 	}

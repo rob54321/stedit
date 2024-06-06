@@ -16,7 +16,7 @@ use StEdit;
 use cmdlOrder;
 # use Getopt::Std;
 
-our ($opt_a, $opt_d, $opt_f, $opt_h, $opt_i, $opt_l, $opt_s, $opt_w, $DEBUG, $opt_V);
+our ($opt_a, $opt_d, $opt_e, $opt_f, $opt_h, $opt_i, $opt_l, $opt_s, $opt_w, $DEBUG, $opt_V);
 # editor object of StEdit.pm
 my $editor;
 
@@ -29,7 +29,7 @@ $DEBUG = 0;
 ###############################################################
 # command line switches for stedit.pl
 # -a text to be appended
-# -d /pattern/i i delete line    - i case insensitive match
+# -d /pattern/iedelete line    - i case insensitive match, e delete empty lines following
 # -f file name to edit           - must be given
 # -i /pattern/text to insert/iab - i case insensitive match, a|b insert after|before line
 # -l display buffer
@@ -46,6 +46,7 @@ $DEBUG = 0;
 # to the global var
 my %subhash = (-a => [\&append,  \$opt_a],
                -d => [\&delete,  \$opt_d],
+               -e => [0,         \$opt_e],
                -f => [0,         \$opt_f],
 			   -h => [0,         \$opt_h],
                -i => [\&insert,  \$opt_i],
@@ -119,7 +120,7 @@ sub display {
 sub usage {
 	print "use ANSI-C quoting \$'...' for interpolation of \\n or \' etc in text arguments\n";
 	print "stedit -f \"full pathname\" optional DEBUG flag\n";
-	print "-d (delete) \"/pattern/i\"  - i for case insensitive search\n";
+	print "-d (delete) \"/pattern/ie\"  - i for case insensitive search, e for delete line and following empty lines\n";
 	print "-a (append) \"text\"\n";
 	print "-i (insert) \"/pattern/text to insert/iab\" - -i case insensitive, a|b insert after|before\n";
 	print "-s (subst)  \"/pattern/replacement/ig\" -i case insensitive, g global\n";
@@ -179,7 +180,7 @@ sub defaultparameter {
 # usage stedit options command options
 # 1. -f filename to edit compulsory
 # 2. commands
-#             -d  (delete): "/pattern/i"     options: i for case insensitive
+#             -d  (delete): "/pattern/ei"     options: i for case insensitive, e delete line and following empty lines
 #             -a  (append): "text to append"
 #             -i  (insert): "/pattern/text to insert/iab" options i case insensitive, a|b insert after|before line       
 #             -s  (subst) : "/pattern/replacement/ig"     options i case insensitive, g global
@@ -242,6 +243,7 @@ do {
 print "########### stedit.pl all flags, function independent #####################\n";
 print "opt_a = $opt_a\n" if $opt_a;
 print "opt_d = $opt_d\n" if $opt_d;
+print "opt_e = $opt_e\n" if $opt_e;
 print "opt_f = $opt_f\n" if $opt_f;
 print "opt_h = $opt_h\n" if $opt_h;
 print "opt_i = $opt_i\n" if $opt_i;

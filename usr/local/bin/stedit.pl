@@ -46,7 +46,6 @@ $DEBUG = 0;
 # to the global var
 my %subhash = (-a => [\&append,  \$opt_a],
                -d => [\&delete,  \$opt_d],
-               -e => [0,         \$opt_e],
                -f => [0,         \$opt_f],
 			   -h => [0,         \$opt_h],
                -i => [\&insert,  \$opt_i],
@@ -243,7 +242,6 @@ do {
 print "########### stedit.pl all flags, function independent #####################\n";
 print "opt_a = $opt_a\n" if $opt_a;
 print "opt_d = $opt_d\n" if $opt_d;
-print "opt_e = $opt_e\n" if $opt_e;
 print "opt_f = $opt_f\n" if $opt_f;
 print "opt_h = $opt_h\n" if $opt_h;
 print "opt_i = $opt_i\n" if $opt_i;

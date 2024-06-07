@@ -141,7 +141,7 @@ sub defaultparameter {
 	# -w is writing file to disk. No parameter given means use original file name
 	# the default argument, if not given on the command line is all drives
 	# the parameter "" cannot be used hence " " is used to indicate there is no filename
-	my %defparam = ( -w => "");
+	my %defparam = ( -w => "/home/robert/file101.txt");
 
 	# for each switch in the defparam hash find it's index and insert default arguments if necessary
 	foreach my $switch (keys(%defparam)) {
@@ -188,6 +188,11 @@ sub defaultparameter {
 #             -V  print version and exit
 #             -h  (help)
 
+# get default parameter for -w if none was given
+# this function must be invoked
+# before any command line processing
+defaultparameter;
+
 # check at least some arguments were given
 # getopts deletes ARGV, so save
 # so it can be used for debugging
@@ -196,11 +201,6 @@ my $count = scalar(@cmdlargs);
 
 # set command line arguments
 $subcontrol = cmdlOrder->new(\%subhash, \@cmdlargs);
-
-# get default parameter for -w if none was given
-# this function must be invoked
-# before any command line processing
-defaultparameter;
 
 # invoke usage if no arguments given
 # or help switch

@@ -100,9 +100,14 @@ sub subst {
 # a file name may be "" whicn means the original file must be writtern to.
 sub write {
 	# write the file to disk
-	# if no filename provided the default parameter is ""
-	# which means use original file 
-	$editor->write($opt_w);
+	# if no parameter is given for -w
+	# then use the original file
+	# given with -f
+	if ($opt_w eq "null") {
+		$editor->write($opt_f);
+	} else {
+		$editor->write($opt_w);
+	}
 }	
 
 # display the file
@@ -191,7 +196,7 @@ sub defaultparameter {
 # get default parameter for -w if none was given
 # this function must be invoked
 # before any command line processing
-defaultparameter;
+# defaultparameter;
 
 # check at least some arguments were given
 # getopts deletes ARGV, so save
@@ -199,7 +204,9 @@ defaultparameter;
 my @cmdlargs = @ARGV;
 my $count = scalar(@cmdlargs);
 
-# set command line arguments
+# set command line switch parameters
+# that are not associated with a sub
+# register the control hash
 $subcontrol = cmdlOrder->new(\%subhash, \@cmdlargs);
 
 # invoke usage if no arguments given
@@ -256,6 +263,7 @@ print "##############################################\n\n";
 
 
 # create the editor instance
+# this must be done before
 if ($opt_f) {
 	# turn on debugging in StEdit.pm
 	# pass $DEBUG flag to new

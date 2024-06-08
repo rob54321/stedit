@@ -25,8 +25,6 @@ my $fname;
 my @efile = ();
 
 # constructor.
-# the file is copied to filename.bak
-# filename.bak is overwritten if it exists.
 # parameters: 1. file name to be edited
 #             2. optional DEBUG FLAG 1 - debugging on, 0 - debugging off
 # the file is read line by line into an array, 
@@ -58,9 +56,6 @@ sub new {
 	# close file
 	close $fh;
 		
-	# make a backup copy to fname.bak
-	copy($fname, $fname . ".bak") or die "new: Could not copy $fname to $fname.bak : $!\n" unless -f $fname . ".bak";
-
 	my $self = {};
 	bless $self, $class;
 	return $self;
@@ -598,27 +593,33 @@ sub insert {
 }
 	
 # method to write file to disk
-# parameters: optional file name will be written to if given
+# if -b given a backup is also made
+# parameters: optional file name, if no filename given and "backup" or "nobackup"
+# write to original file
 # return: nothing
 sub write {
 	my $count = scalar(@_);
 	
 	# get parameters
-	my $self = shift;
+	my $self = shift @_;
 
-	# if 2 parameters were passed
-	# if file name was "" then
-	# use original name $fname
-	my $filewrite = $fname;
+	# file name, could be a new file
+	# or original file. 
+	my $writefile = shift @_;
+	
+	# get backup flag
+	my $backup = shift @_;
 
-	# for stedit.pl if -w has no argument "" is used
-	# as a default parameter. -w must have a parameter
-	# for getopts to work
-	$filewrite = shift if $count == 2 and $_[0] ne "";
-	print "filename: $filewrite\n" if $DEBUG;
+	print "StEdit->write() filename: $writefile\n" if $DEBUG;
+
+	# make a backup copy of the original file to fname.bak if -b switch given
+	
+	do {
+		copy($fname, $fname . ".bak") or die "Copy of $fname to $fname" . ".bak failed: $!\n";
+	} if $backup eq "backup";
 
 	# write the efile to disk
-	open (my $fh, ">", $filewrite) or die "Could not open $fname for writing: $!\n";
+	open (my $fh, ">", $writefile) or die "Could not open $writefile for writing: $!\n";
 
 	foreach my $line (@efile) {
 		print $fh "$line\n";

@@ -16,7 +16,7 @@ use StEdit;
 use cmdlOrder;
 # use Getopt::Std;
 
-our ($opt_a, $opt_d, $opt_e, $opt_f, $opt_h, $opt_i, $opt_l, $opt_s, $opt_w, $DEBUG, $opt_V);
+our ($opt_a, $opt_b, $opt_d, $opt_e, $opt_f, $opt_h, $opt_i, $opt_l, $opt_s, $opt_w, $DEBUG, $opt_V);
 # editor object of StEdit.pm
 my $editor;
 
@@ -35,6 +35,7 @@ $DEBUG = 0;
 # -l display buffer
 # -s /pattern/replacement/ig     - i case insensitive match, g sust globally
 # -w file name|default write     - default is to use the same file name as source
+# -b make a backup file only used with -w
 # -V version and exit
 # -D turn debugging on
 ###############################################################
@@ -52,6 +53,7 @@ my %subhash = (-a => [\&append,  \$opt_a],
                -l => [\&display, \$opt_l],
                -s => [\&subst,   \$opt_s],
                -w => [\&write,   \$opt_w],
+               -b => [0,         \$opt_b],
 			   -D => [0,         \$DEBUG],
 			   -V => [0,         \$opt_V]);
 
@@ -103,12 +105,21 @@ sub write {
 	# if no parameter is given for -w
 	# then use the original file
 	# given with -f
+	# set file name
+	my $fname;
 	if ($opt_w eq "null") {
-		$editor->write($opt_f);
+		$fname = $opt_f;
 	} else {
-		$editor->write($opt_w);
+		$fname = $opt_w;
 	}
-}	
+	# if -b switch given create backup
+	if ($opt_b) {
+		$editor->write($fname, "backup");
+	} else {
+		$editor->write($fname, "nobackup");
+	}
+}
+
 
 # display the file
 # no title can be given
@@ -129,6 +140,7 @@ sub usage {
 	print "-i (insert) \"/pattern/text to insert/iab\" - -i case insensitive, a|b insert after|before\n";
 	print "-s (subst)  \"/pattern/replacement/ig\" -i case insensitive, g global\n";
 	print "-w (write)  \"new filename\"|default is original name if none given\n";
+	print "-b (backup file) makes a file.bak, only works with the -w switch\n";
 	print "-l (list file)\n";
 	print "-D (turn debugging on)\n";
 	print "-V print version and exit\n";

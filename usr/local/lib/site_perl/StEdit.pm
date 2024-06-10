@@ -18,7 +18,7 @@ use File::Copy;
 # DEBUG FLAG, true for debugging or else false
 my $DEBUG = 0;
 
-# file name
+# file name of file to be edited
 my $fname;
 
 # array to hold file line by line.
@@ -61,6 +61,128 @@ sub new {
 	return $self;
 }
 
+####################################################
+# script method
+# this method applies each command from a script file
+# to the file being edited.
+# parameters: script file
+# return: none
+####################################################
+sub script {
+	# get parameters
+	my $self = shift @_;
+	my $sfile = shift @_;
+	
+	print "StEdit->script(): script file $sfile\n";
+	
+	# open file and read lines into an array
+	open my $sf, "<", $sfile or die "Could not open script file $sfile: $!\n";
+	
+	# read into an array
+	my @script = <$sf>;
+	# remove terminator from each element
+	chomp @script;
+	
+	close $sf;
+	
+	# list for command, followed by parameter, or another command. Like @ARGV
+	my @cmdlist;
+	# apply all commands in @script
+	# to @efile as file to be edited is in @efile
+	for ( my $i=0; $i<scalar(@script); $i++) {
+		# each line is a command of form
+		# -a /text/
+		# -d /pattern/ie
+		# -i /pattern/text/iab
+		# -s /pattern/replacement/ig
+		# -w optional filename -- this should be ignored
+		# -l
+		# make a list like @ARGV, ie (-i, "/pattern/text/ie", -d, "/pattern/ie", .., command, parameter, ..)
+		# if a command has no parameter then command is followed by another command
+		# or it is the last switch in the list.
+		my @line = split / /, $script[$i], 2;
+		
+		# delete first element if it is empty
+		shift @line unless $line[0];
+		
+		# push each field into the array
+		for (my $j=0; $j<scalar(@line); $j++) {
+			push @cmdlist, $line[$j];
+		}
+	}
+	
+	# for debug
+	do {
+		for (my $i=0; $i<scalar(@cmdlist); $i++) {
+			print "cmdlist[$i] = $cmdlist[$i]\n";
+		}
+	} if $DEBUG;
+		
+	# @cmdlist = (-a, /text/, -l, -i, /patten/text/ia, ...)
+	# for each command call appropriate method
+	# the write command is ignored
+	for (my $i=0; $i<scalar(@cmdlist); $i++) {
+		SWITCH: {
+					$cmdlist[$i] =~ /-a/ && do {	# append command needs a parameter
+													# if on last element, then no parameter follows
+													if ($i < scalar(@cmdlist) - 1 and $cmdlist[$i+1] !~ /^-/) {
+														$self->append($cmdlist[$i+1]);
+														$i++;
+														last SWITCH;
+													} else {
+														# no parameter found for -a
+														# die
+														die "-a from script file $sfile has no parameter\n";
+													}
+												};
+
+					$cmdlist[$i] =~ /-d/ && do {	# delete command needs a parameter
+													# die if no parameter for -d
+													if ($i < scalar(@cmdlist) - 1 and $cmdlist[$i+1] !~ /^-/) {
+														$self->delete($cmdlist[$i+1]);
+														$i++;
+														last SWITCH;
+													} else {
+														# no parameter for -d, die
+														die "-d from script file $sfile has no parameter\n";
+													}
+												};
+												
+					$cmdlist[$i] =~ /-i/ && do {	#insert must have a parameter, die if not
+													if ($i < scalar(@cmdlist) - 1 and $cmdlist[$i+1] !~ /^-/) {
+														$self->insert($cmdlist[$i+1]);
+														$i++;
+														last SWITCH;
+													} else {
+														# no parameter found die
+														die "-i from script file $sfile has no parameter\n";
+													}
+												};
+												
+					$cmdlist[$i] =~ /-s/ && do {	#subs must have a parameter, die if not
+													if ($i < scalar(@cmdlist) - 1 and $cmdlist[$i+1] !~ /^-/) {
+														$self->subst($cmdlist[$i+1]);
+														$i++;
+														last SWITCH;
+													} else {
+														# no parameter found die
+														die "-s from script file $sfile has no parameter\n";
+													}
+												};
+												
+					$cmdlist[$i] =~ /-l/ && do {	# display the file, no parameter required
+													$self->display();
+													last SWITCH;
+												};
+												
+					$cmdlist[$i] =~ /-w/ && do {	# write command is ignored
+													print "the write command is ignored from script file $sfile\n";
+													last SWITCH;
+												};
+				}
+	}
+	
+}
 
 ####################################################
 # parsearg function:

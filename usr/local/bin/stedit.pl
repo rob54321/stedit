@@ -11,12 +11,12 @@
 
 use strict;
 use warnings;
-# use lib "/home/robert/stedit/usr/local/lib/site_perl";
+use lib "/home/robert/stedit/usr/local/lib/site_perl";
 use StEdit;
 use cmdlOrder;
 # use Getopt::Std;
 
-our ($opt_a, $opt_b, $opt_d, $opt_e, $opt_f, $opt_h, $opt_i, $opt_l, $opt_s, $opt_w, $DEBUG, $opt_V);
+our ($opt_a, $opt_b, $opt_d, $opt_e, $opt_f, $opt_h, $opt_i, $opt_l, $opt_s, $opt_w, $DEBUG, $opt_F, $opt_V);
 # editor object of StEdit.pm
 my $editor;
 
@@ -55,7 +55,17 @@ my %subhash = (-a => [\&append,  \$opt_a],
                -w => [\&write,   \$opt_w],
                -b => [0,         \$opt_b],
 			   -D => [0,         \$DEBUG],
+			   -F => [\&script,  \$opt_F],
 			   -V => [0,         \$opt_V]);
+
+###############################################################
+# script function
+# this method reads commands from the script file $opt_F
+# and applies them line by line to the file being edited.
+###############################################################
+sub script {
+	$editor->script($opt_F);
+}
 
 # delete function
 # delete a line(s) that match pattern

@@ -153,6 +153,7 @@ sub usage {
 	print "-b (backup file) makes a file.bak, only works with the -w switch\n";
 	print "-l (list file)\n";
 	print "-D (turn debugging on)\n";
+	print "-F (script file name) run commands from file\n";
 	print "-V print version and exit\n";
 	print "pattern could be \$'^some line\$|^or.*another\$|^\$'\n";
 	print "-h (help)\n";

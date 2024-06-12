@@ -85,8 +85,11 @@ sub script {
 	
 	close $sf;
 	
-	# list for command, followed by parameter, or another command. Like @ARGV
+	# make a list of commands/parameters @cmdlist, like @ARGV. (switch,param,switch,switch,param,....)
 	my @cmdlist;
+	my $cmd;
+	my $param;
+
 	# apply all commands in @script
 	# to @efile as file to be edited is in @efile
 	for ( my $i=0; $i<scalar(@script); $i++) {
@@ -100,24 +103,67 @@ sub script {
 		# make a list like @ARGV, ie (-i, "/pattern/text/ie", -d, "/pattern/ie", .., command, parameter, ..)
 		# if a command has no parameter then command is followed by another command
 		# or it is the last switch in the list.
-		my @line = split / /, $script[$i], 2;
-		
-		# delete first element if it is empty
-		shift @line unless $line[0];
-		
-		# push each field into the array
-		for (my $j=0; $j<scalar(@line); $j++) {
-			push @cmdlist, $line[$j];
+
+		# @script is a list of lines of the script file
+		# each line consists of
+		# 1 command parameter
+		# 2 command
+		# empty lines
+		# lines with spaces
+		# get the command which could be -a -d -i -s -l -w
+		# only -l does not take a parameter
+		# =w may or may not take a parameter which is a file name
+		# ignored, empty lines, lines with no command, white space, comment lines starting with #
+		if ($script[$i] =~ /(-a|-d|-i|-s)/) {
+			# there is a command
+			# that takes a parameter
+			$cmd = $1;
+			$script[$i] =~ /(-.)\s+(.*)/;
+			# if no parameter, die
+			die "$cmd needs a parameter\n" unless $2;
+			$param = $2;
+			# clean up white space
+			$param =~ s/(\s+)$//g;
+			# push cmd and param onto list
+			push @cmdlist, ($cmd, $param);
+			
+		} elsif ($script[$i] =~ /-l/) {
+			# command -l does not take a parameter;
+			push @cmdlist, "-l";
+
+		} elsif ($script[$i] =~ /-w/) {
+			# -w may or may not take a file name parameter
+			$cmd = "-w";
+			# check for a parameter after -w
+			$script[$i] =~ /(-.)\s+(.*)/;
+			# if there is parameter
+			if (defined $2) {
+				# clean white space after parameter
+				$param = $2;
+				$param =~ s/(\s+)$//g;
+				# check $param is not the empty string
+				if ($param ne "") {
+					# push cmd and param on cmdlist
+					push @cmdlist, ($cmd, $param);
+					
+			    } else {
+					# there is no parameter
+					push @cmdlist, "-w";
+				}
+			} else {
+				# no parameter
+				push @cmdlist, "-w";
+			}
 		}
-	}
-	
+
+	}	
 	# for debug
 	do {
 		for (my $i=0; $i<scalar(@cmdlist); $i++) {
-			print "cmdlist[$i] = $cmdlist[$i]\n";
+			print "cmdlist[$i] = [$cmdlist[$i]]\n";
 		}
 	} if $DEBUG;
-		
+exit 0;		
 	# @cmdlist = (-a, /text/, -l, -i, /patten/text/ia, ...)
 	# for each command call appropriate method
 	# the write command is ignored

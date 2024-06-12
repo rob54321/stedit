@@ -89,6 +89,9 @@ sub script {
 	my @cmdlist;
 	my $cmd;
 	my $param;
+	
+	# backup flag for write command
+	my $backup = 0;
 
 	# apply all commands in @script
 	# to @efile as file to be edited is in @efile
@@ -154,6 +157,10 @@ sub script {
 				# no parameter
 				push @cmdlist, "-w";
 			}
+		} elsif ($script[$i] =~ /-b/) {
+			# backup given for write command
+			# set backup flag
+			$backup = 1;
 		}
 
 	}	
@@ -162,8 +169,9 @@ sub script {
 		for (my $i=0; $i<scalar(@cmdlist); $i++) {
 			print "cmdlist[$i] = [$cmdlist[$i]]\n";
 		}
+		print "backup flag = $backup\n";
 	} if $DEBUG;
-exit 0;		
+
 	# @cmdlist = (-a, /text/, -l, -i, /patten/text/ia, ...)
 	# for each command call appropriate method
 	# the write command is ignored
@@ -220,10 +228,18 @@ exit 0;
 													$self->display();
 													last SWITCH;
 												};
-												
-					$cmdlist[$i] =~ /-w/ && do {	# write command is ignored
-													print "the write command is ignored from script file $sfile\n";
-													last SWITCH;
+
+					$cmdlist[$i] =~ /-w/ && do {	#write takes a filename parameter and backup or nobackup
+													# and if -b  given then backup original file
+													if ($i < scalar(@cmdlist) - 1 and $cmdlist[$i+1] !~ /^-/) {
+														$self->write($cmdlist[$i+1], $backup);
+														$i++;
+														last SWITCH;
+													} else {
+														# no parameter use original file name
+														$self->write($fname, $backup);
+														
+													}
 												};
 				}
 	}
@@ -762,8 +778,8 @@ sub insert {
 	
 # method to write file to disk
 # if -b given a backup is also made
-# parameters: optional file name, if no filename given and "backup" or "nobackup"
-# write to original file
+# parameters: filename to write to, could be original file
+#             backup flag, backup if set
 # return: nothing
 sub write {
 	my $count = scalar(@_);
@@ -784,7 +800,7 @@ sub write {
 	
 	do {
 		copy($fname, $fname . ".bak") or die "Copy of $fname to $fname" . ".bak failed: $!\n";
-	} if $backup eq "backup";
+	} if ($backup);
 
 	# write the efile to disk
 	open (my $fh, ">", $writefile) or die "Could not open $writefile for writing: $!\n";

@@ -124,9 +124,9 @@ sub write {
 	}
 	# if -b switch given create backup
 	if ($opt_b) {
-		$editor->write($fname, "backup");
+		$editor->write($fname, 1);
 	} else {
-		$editor->write($fname, "nobackup");
+		$editor->write($fname, 0);
 	}
 }
 

@@ -372,11 +372,17 @@ sub delete {
 						# done by incrementing $i
 						# do not go past end of file
 						while ($i < scalar(@efile) - 1 and $efile[$i+1] =~ /^$/) {
-							# skip this line
-							$i++;
 							
+							# DEBUG: print the line
+							do {
+								$lineno = $i + 1;
+								push @debug, "deleted line $lineno: $efile[$i]\n";
+							} if $DEBUG;
+							# delete line and count it
 							# count the deleted lines
 							$count++;
+							# skip this line
+							$i++;
 						}
 					}
 					
@@ -405,11 +411,17 @@ sub delete {
 					# done by incrementing $i
 					# do not go past end of file
 					while ($i < scalar(@efile) - 1 and $efile[$i+1] =~ /^$/) {
-						# skip this line empty line due to modifier e
-						$i++;
 						
+						# DEBUG: print the line
+						do {
+							$lineno = $i + 1;
+							push @debug, "deleted line $lineno: $efile[$i]\n";
+						} if $DEBUG;
+						# delete line and count it
 						# count the deleted lines
 						$count++;
+						# skip this line empty line due to modifier e
+						$i++;
 					}
 					# DEBUG: print the line
 					do {

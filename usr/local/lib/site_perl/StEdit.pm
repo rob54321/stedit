@@ -243,7 +243,7 @@ sub script {
 												};
 				}
 	}
-	
+
 }
 
 ####################################################
@@ -278,64 +278,39 @@ sub parsearg {
 	# split the arg
 	# note: the arg for append and delete may not have the leading and trailing slash
 	# the subs and insert commands must have three slashes /pattern/text/options
-	
-	# list to store components of the argument
-	my @list;
-	
+
 	if ($cmd eq "a" || $cmd eq "d") {
-		# append and delete may or may not have slashes
-		# around argument
-		# if there are no slashes, there can be no options
-		# make sure there are no groups of 2 or more / together
-		if ($arg =~ /^\/.*\// and $arg !~ /\/{2,}/) {
-			# arg of form /pattern/
-			@list = split /\//,$arg;
-			# remove first empty element
-			shift @list;
-		}
+		# append /some text /
+		# delete /some text /i i is optional modifier
+		# stript components
+		$arg =~ /\/(.*)\/(.*)/;
+		
+		$reflist->[0] = $1;
+		if ($2) { $reflist->[1] = $2; } else { $reflist->[1] = ""; }
+
 	} elsif ($cmd eq "i" || $cmd eq "s") {
-		# subs and insert have arg /pattern/text/options or none
-		# retrieve the arguments
-		if ($arg =~ /^\/.*\/.*\// and $arg !~ /\/{2,}/) {
-			@list = split /\//, $arg;
-			# remove first empty element
-			shift @list;
-		}
+		# insert and subst
+		# take parameter /pattern/text/iabg optional modifiers
+		$arg =~ /\/(.*)\/(.*)\/(.*)/;
+		$reflist ->[0] = $1;
+		if ($2) { $reflist->[1] = $2; } else { $reflist->[1] = ""; }
+		
+		if ($3) { $reflist->[2] = $3; } else { $reflist->[2] = ""; }
+		
 	}
 
 	# print all arguments form @list
 	do {
 		print "################StEdit->parsearg()######################\n";
-		print "command $cmd: no of \@list args ". scalar(@list) . "\n";
-		for (my $i=0; $i<scalar(@list); $i++) {
-			print "list[$i]: $list[$i]\n" if $list[$i];
+		print "command $cmd: no of reflist args ". scalar(@$reflist) . "\n";
+		for (my $i=0; $i<scalar(@$reflist); $i++) {
+			print "reflist[$i]: [$reflist->[$i]]\n" if $reflist->[$i];
 		}
 		print "################################################\n\n";
-	} if $DEBUG;
-	
+	};
 	# check that the arg is not mal formed
-	die "StEdit->parsarg(): The arg = $arg for command $cmd is malformed\n" if scalar(@list) == 0 or ! defined($list[0]);
+	die "StEdit->parsarg(): The arg = $arg for command $cmd is malformed\n" if scalar(@$reflist) == 0 or ! defined($reflist->[0]);
 
-	# for each command
-	if ($cmd eq "d") {
-		# for delete command: arg is /pattern/i or /pattern/
-		$reflist->[0] = $list[0];
-		# copy options if there are any
-		$reflist->[1] = $list[1] if $list[1];
-	} elsif ($cmd eq "a") {
-		# for append command: arg is text
-		$reflist->[0] = $list[0];
-	} elsif ($cmd eq "i" or $cmd eq "s") {
-		# check that format of arg is /pattern/text/options|none
-		# die if there are 2 or more / together or if there are no /
-		die "the format of arg $arg is wrong should be \/pattern\/text\/options|none\n" if ($arg !~ /^\/.*\/.*\// or $arg =~ /\/{2,}/);
-		
-		# for insert or subs command: /pattern/text/ or /pattern/text/i|a|b|g or none
-		$reflist->[0] = $list[0];
-		$reflist->[1] = $list[1];
-		# if there are options
-		$reflist->[2] = $list[2] if $list[2];
-	}
 }
 
 ####################################################################
@@ -365,6 +340,9 @@ sub delete {
 	my $pattern = $list[0];
 	my $option;
 	$option = $list[1] if $list[1];
+
+	# line number deleted for DEBUG
+	my $lineno if $DEBUG;
 
 	# delete all lines that match address
 	# if address is "" then delete all lines
@@ -400,11 +378,16 @@ sub delete {
 							# count the deleted lines
 							$count++;
 						}
-						# DEBUG: print the line
-						push @debug, "deleted: $efile[$i]\n" if $DEBUG;
-						# delete line and count it
-						$count++;
 					}
+					
+					# DEBUG: print the line
+					do {
+						$lineno = $i + 1;
+						push @debug, "deleted line $lineno: $efile[$i]\n";
+					} if $DEBUG;
+					# delete line and count it
+					$count++;
+
 				} else {
 					# keep line
 					push @temparray, $efile[$i];
@@ -429,7 +412,10 @@ sub delete {
 						$count++;
 					}
 					# DEBUG: print the line
-					push @debug, "deleted: $efile[$i]\n" if $DEBUG;
+					do {
+						$lineno = $i + 1;
+						push @debug, "deleted line $lineno: $efile[$i]\n";
+					} if $DEBUG;
 					# delete line and count it
 					$count++;
 
@@ -446,7 +432,10 @@ sub delete {
 			# case sensitive search
 			if ($efile[$i] =~ /$pattern/) {
 				# DEBUG: print the line
-				push @debug, "deleted: $efile[$i]\n" if $DEBUG;
+				do {
+					$lineno = $i + 1;
+					push @debug, "deleted line $lineno: $efile[$i]\n";
+				} if $DEBUG;
 				# delete line and count it
 				$count++;
 			} else {
@@ -475,7 +464,7 @@ sub delete {
 
 ################################################################################
 # sub to subsitute in each line of the file
-# parameters: 1. arg /pattern/replacement/ig or any combination of modifiers
+# parameters: 1. arg of form: /pattern/replacement/ig or any combination of modifiers
 # return: no of subsitutions
 #         undefined on error
 ################################################################################
@@ -490,10 +479,11 @@ sub subst {
 	# list for all argument components
 	# $list[0] = pattern
 	# $list[1] = replacement
-	# $list[2] = modiefies i or g or ig or gi or undef
+	# $list[2] = modifiers i or g or ig or gi or undef
 	my @list;
 
 	# parse argument
+	# separate pattern, replacement, modifiers into a list
 	$self->parsearg("s", $arg, \@list);
 
 	# use nice var names
@@ -503,12 +493,11 @@ sub subst {
 	# for debug
 	do {
 		if ($modi) {
-			push @debug, "pattern = $pattern : replacement = $replacement : modifier = $modi\n";
+			push @debug, "pattern = [$pattern] : replacement = [$replacement] : modifier = [$modi]\n";
 		} else {
-			push @debug, "pattern = $pattern : replacement = $replacement : no modifiers\n";
+			push @debug, "pattern = [$pattern] : replacement = [$replacement] : no modifiers\n";
 		}
 	} if $DEBUG;
-	
 	# the modifier can be
 	# i - case insensitive
 	# g - global search in line
@@ -530,7 +519,7 @@ sub subst {
 			$oldline = $line if $DEBUG;
 			$noofmatches = $line =~ s/$pattern/$replacement/g;
 			#for debug
-			push @debug, "old: $oldline\nnew: $line\n" if $DEBUG and ($noofmatches > 0);
+			push @debug, "old: [$oldline]\nnew: [$line]\n" if $DEBUG and ($noofmatches > 0);
 			
 			# add up matches
 			$count = $count + $noofmatches;
@@ -542,7 +531,7 @@ sub subst {
 			$oldline = $line if $DEBUG;
 			$noofmatches = $line =~ s/$pattern/$replacement/i;
 			#for debug
-			push @debug, "old: $oldline\nnew: $line\n" if $DEBUG and ($noofmatches > 0);
+			push @debug, "old: [$oldline]\nnew: [$line]\n" if $DEBUG and ($noofmatches > 0);
 			
 			$count = $count + $noofmatches;
 		}
@@ -553,7 +542,7 @@ sub subst {
 			$oldline = $line if $DEBUG;
 			$noofmatches = $line =~ s/$pattern/$replacement/ig;
 			#for debug
-			push @debug, "old: $oldline\nnew: $line\n" if $DEBUG and ($noofmatches > 0);
+			push @debug, "old: [$oldline]\nnew: [$line]\n" if $DEBUG and ($noofmatches > 0);
 			
 			$count = $count + $noofmatches;
 		}
@@ -565,7 +554,7 @@ sub subst {
 			$oldline = $line if $DEBUG;
 			$noofmatches = $line =~ s/$pattern/$replacement/;
 			#for debug
-			push @debug, "old: $oldline\nnew: $line\n" if $DEBUG and ($noofmatches > 0);
+			push @debug, "old: [$oldline]\nnew: [$line]\n" if $DEBUG and ($noofmatches > 0);
 			
 			$count = $count + $noofmatches;
 		}

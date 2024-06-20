@@ -21,9 +21,25 @@ my $DEBUG = 0;
 # file name of file to be edited
 my $fname;
 
-# array to hold file line by line.
+# array to hold the original file
+# so that it can be displayed in colour
+# to indicate the changes made.
+my @ofile = ();
+# array to hold the edited file line by line.
 my @efile = ();
 
+# the colours used for display the file
+# to indicate changes.
+# red: line deleted
+# green: line added by append or insert
+# yellow: line was changed by subst command
+my $red = "\e[31m";
+my $green = "\e[32m";
+my $yellow = "\e[33m";
+my $blue = "\e[34m";
+my $magenta = "\e[35m";
+my $cyan = "\e[36m";
+my $normal = "\e[0m";
 # constructor.
 # parameters: 1. file name to be edited
 #             2. optional DEBUG FLAG 1 - debugging on, 0 - debugging off
@@ -50,11 +66,14 @@ sub new {
 		# remove terminator at end
 		chomp($line);
 		# add to array
-		push (@efile, $line);
+		push (@ofile, $line);
 	}
 
 	# close file
 	close $fh;
+	
+	# set the array for the file to be edited
+	@efile = @ofile;
 		
 	my $self = {};
 	bless $self, $class;
@@ -314,6 +333,26 @@ sub parsearg {
 }
 
 ####################################################################
+# setcolour
+# this method sets the colour in the original file
+# red deleted line
+# green for added line by insert or append
+# yellow for line changed by subst
+# parameters: index of ofile array to change, colour
+# return: nothing
+####################################################################
+sub setcolour {
+	# get parameters
+	my $self = shift @_;
+	my $index = shift @_;
+	my $colour = shift @_;
+
+	# set the line
+	$ofile[$index] = $colour . $ofile[$index] . $normal;
+	return;
+}
+
+####################################################################
 # delete function
 # delete each line matching the pattern
 # parameter: of form /pattern/ie or /pattern/
@@ -443,6 +482,10 @@ sub delete {
 		for (my $i=0; $i<scalar(@efile); $i++) {
 			# case sensitive search
 			if ($efile[$i] =~ /$pattern/) {
+				# this line is being deleted
+				# set the colour to red in original array
+				$self->setcolour($i, $red);
+				
 				# DEBUG: print the line
 				do {
 					$lineno = $i + 1;
@@ -624,6 +667,12 @@ sub append {
 	# append the string to the efile array
 	# string can be : something\nnew line\n\tnew line again\n\tetc
 	push @efile, $list[0];
+
+print "index $#ofile\n";	
+	# push new line onto ofile for display
+	# set the colour of the last line of ofile to green
+	push @ofile, $list[0];
+	$self->setcolour($#ofile, $green);
 
 	# for debug
 	if ($DEBUG) {
@@ -814,9 +863,11 @@ sub write {
 	close $fh;
 }
 	
-# display the buffer for testing purposes
-# mainly for debugging.
+###################################################################
+# display the edited file
+# parameters: none
 # return: nothing
+###################################################################
 sub display {
 	my $self = shift;
 
@@ -827,5 +878,22 @@ sub display {
 	}
 	print "#####################################################\n\n";
 }
+
+###################################################################
+# display the original file with colour indicators
+# parameters: none
+# return: nothing
+###################################################################
+sub cdisplay {
+	my $self = shift;
+
+	# print each line
+	print "##################### $fname /#######################\n";
+	foreach my $line (@ofile) {
+		print "$line\n";
+	}
+	print "#####################################################\n\n";
+}
+
 # this is the last line of the module and must be here
 1;

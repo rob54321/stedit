@@ -11,12 +11,12 @@
 
 use strict;
 use warnings;
-# use lib "/home/robert/stedit/usr/local/lib/site_perl";
+use lib "/home/robert/stedit/usr/local/lib/site_perl";
 use StEdit;
 use cmdlOrder;
 # use Getopt::Std;
 
-our ($opt_a, $opt_b, $opt_d, $opt_e, $opt_f, $opt_h, $opt_i, $opt_l, $opt_s, $opt_w, $DEBUG, $opt_F, $opt_V);
+our ($opt_a, $opt_b, $opt_d, $opt_e, $opt_f, $opt_h, $opt_i, $opt_l, $opt_o, $opt_s, $opt_w, $DEBUG, $opt_F, $opt_V);
 # editor object of StEdit.pm
 my $editor;
 
@@ -45,18 +45,19 @@ $DEBUG = 0;
 # if the sub is not to be invoked
 # set the sub ref to 0 followed by ref
 # to the global var
-my %subhash = (-a => [\&append,  \$opt_a],
-               -d => [\&delete,  \$opt_d],
-               -f => [0,         \$opt_f],
-			   -h => [0,         \$opt_h],
-               -i => [\&insert,  \$opt_i],
-               -l => [\&display, \$opt_l],
-               -s => [\&subst,   \$opt_s],
-               -w => [\&write,   \$opt_w],
-               -b => [0,         \$opt_b],
-			   -D => [0,         \$DEBUG],
-			   -F => [\&script,  \$opt_F],
-			   -V => [0,         \$opt_V]);
+my %subhash = (-a => [\&append,  	\$opt_a],
+               -d => [\&delete,  	\$opt_d],
+               -f => [0,         	\$opt_f],
+			   -h => [0,         	\$opt_h],
+               -i => [\&insert,  	\$opt_i],
+               -l => [\&display, 	\$opt_l],
+               -s => [\&subst,   	\$opt_s],
+               -o => [\&cdisplay,	\$opt_o],
+               -w => [\&write,   	\$opt_w],
+               -b => [0,         	\$opt_b],
+			   -D => [0,         	\$DEBUG],
+			   -F => [\&script,  	\$opt_F],
+			   -V => [0,         	\$opt_V]);
 
 ###############################################################
 # script function
@@ -135,10 +136,15 @@ sub write {
 # no title can be given
 # StEdit.pm uses a title for debugging purposes only
 sub display {
-	# display the file
-	# "" is the default parameter for -D switch
-	# and means no title
+	# display the edited file
 	$editor->display();
+}
+
+# display the original file with colour indicators
+# parameters none
+# return nothing
+sub cdisplay {
+	$editor->cdisplay();
 }
 
 # usage function
@@ -151,7 +157,8 @@ sub usage {
 	print "-s (subst)  \"/pattern/replacement/ig\" -i case insensitive, g global\n";
 	print "-w (write)  \"new filename\"|default is original name if none given\n";
 	print "-b (backup file) makes a file.bak, only works with the -w switch\n";
-	print "-l (list file)\n";
+	print "-l (list edited file)\n";
+	print "-o (list original file with colour changes\n";
 	print "-D (turn debugging on)\n";
 	print "-F (script file name) run commands from file\n";
 	print "-V print version and exit\n";

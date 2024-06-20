@@ -40,6 +40,10 @@ my $blue = "\e[34m";
 my $magenta = "\e[35m";
 my $cyan = "\e[36m";
 my $normal = "\e[0m";
+
+# used to mark empty deleted lines
+my $redunderscore = "\e[31m____";
+
 # constructor.
 # parameters: 1. file name to be edited
 #             2. optional DEBUG FLAG 1 - debugging on, 0 - debugging off
@@ -404,10 +408,13 @@ sub delete {
 				# case insensitive pattern
 				if ($efile[$i] =~ /$pattern/i) {
 					# delete line by not pushing it to @temparray
+					# set the colour to red in ofile
+					$self->setcolour($i, $red);
+
 					# if modifier e given, delete following empty lines
 					if ($option =~ "e") {
 						# while lines are empty delete them
-						# by moving not pushing them.
+						# by not pushing them.
 						# done by incrementing $i
 						# do not go past end of file
 						while ($i < scalar(@efile) - 1 and $efile[$i+1] =~ /^$/) {
@@ -421,6 +428,9 @@ sub delete {
 							# count the deleted lines
 							$count++;
 							# skip this line
+							
+							# mark this empty line with red ___ in ofile
+							$self->setcolour($i+1, $redunderscore);
 							$i++;
 						}
 					}
@@ -448,6 +458,9 @@ sub delete {
 					# while lines are empty delete them
 					# by moving not pushing them.
 					# done by incrementing $i
+					# set colour of deleted line to red
+					$self->setcolour($i, $red);
+					
 					# do not go past end of file
 					while ($i < scalar(@efile) - 1 and $efile[$i+1] =~ /^$/) {
 						
@@ -459,6 +472,9 @@ sub delete {
 						# delete line and count it
 						# count the deleted lines
 						$count++;
+						
+						# mark empty deleted line with red ___
+						$self->setcolour($i+1, $redunderscore);
 						# skip this line empty line due to modifier e
 						$i++;
 					}

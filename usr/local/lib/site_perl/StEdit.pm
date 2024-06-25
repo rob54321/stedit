@@ -475,6 +475,44 @@ sub setcolour {
 			}
 
 		}
+	} elsif ($command eq "s") {
+		# subst command, modifiers are i or g or nothing
+		for (my $i=0; $i<scalar(@ofile); $i++) {
+			# find matching line only if it was
+			# not deleted.
+			if ($ofile[$i] !~ /^\e.31m/) {
+				# check modifier
+				if (defined($mod) and ($mod eq "i")) {
+					# matching line
+					if ($ofile[$i] =~ /$pattern/i) {
+						$ofile[$i] =~ s/$pattern/$text/i;
+						# set colour
+						$ofile[$i] = $colour . $ofile[$i] . $normal;
+					}	
+				} elsif (defined($mod) and ($mod eq "ig" or $mod eq "gi")) {
+					# matching line modifier is ig
+					if ($ofile[$i] =~ /$pattern/i) {
+						$ofile[$i] =~ s/$pattern/$text/ig;
+						# set colour
+						$ofile[$i] = $colour . $ofile[$i] . $normal;
+					}
+				} elsif (defined($mod) and ($mod eq "g")) {
+					# matching line modifier is ig
+					if ($ofile[$i] =~ /$pattern/) {
+						$ofile[$i] =~ s/$pattern/$text/g;
+						# set colour
+						$ofile[$i] = $colour . $ofile[$i] . $normal;
+					}
+				} else {
+					# matching line modifier no mofifier
+					if ($ofile[$i] =~ /$pattern/) {
+						$ofile[$i] =~ s/$pattern/$text/;
+						# set colour
+						$ofile[$i] = $colour . $ofile[$i] . $normal;
+					}
+				}
+			}
+		}
 	}
 	return;
 }
@@ -771,6 +809,9 @@ sub subst {
 		print "###########\n";
 	}
 
+	# set colours in ofile
+	$self->setcolour($pattern, $modi, $yellow, "s", $replacement);
+	
 	# return no of matches
 	return $count;
 }

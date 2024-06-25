@@ -330,7 +330,7 @@ sub parsearg {
 			print "reflist[$i]: [$reflist->[$i]]\n" if $reflist->[$i];
 		}
 		print "################################################\n\n";
-	};
+	} if $DEBUG;
 	# check that the arg is not mal formed
 	die "StEdit->parsarg(): The arg = $arg for command $cmd is malformed\n" if scalar(@$reflist) == 0 or ! defined($reflist->[0]);
 
@@ -342,17 +342,140 @@ sub parsearg {
 # red deleted line
 # green for added line by insert or append
 # yellow for line changed by subst
-# parameters: index of ofile array to change, colour
+# index is the index for efile which changes. The same
+# line in ofile must be found and it's index used
+# append command has the correct index. search not necessary
+# parameters: pattern to match, modifier, colour, command a or i s d, new text|replacement text
 # return: nothing
 ####################################################################
 sub setcolour {
 	# get parameters
 	my $self = shift @_;
-	my $index = shift @_;
+	my $pattern = shift @_;
+	my $mod = shift @_;
 	my $colour = shift @_;
+	my $command = shift @_;
+	my $text = shift @_;
+	
+	# find the line that matches the pattern
+	if ($command eq "d") {
+		# search for the pattern in ofile
+		# and mark all with the colour
 
-	# set the line
-	$ofile[$index] = $colour . $ofile[$index] . $normal;
+		for (my $i = 0; $i<scalar(@ofile); $i++) {
+			if (defined($mod) and $mod =~ /i/) {
+				
+				# modifier contains i
+				if ($ofile[$i] =~ /$pattern/i) {
+					$ofile[$i] = $colour . $ofile[$i] . $normal;
+
+					# if e was given as well mark all following
+					# empty lines with ____ in red
+					if (defined($mod) and $mod =~ /e/) {
+						while ($i<scalar(@ofile) - 1 and $ofile[$i+1] =~ /^$/) {
+							# mark with red ____
+							$ofile[$i+1] = $redunderscore . $ofile[$i+1] . $normal;
+							# increase i
+							$i++;
+						}
+					}
+				}
+
+			} else {
+				# no i modifier
+				if ($ofile[$i] =~ /$pattern/) {
+					$ofile[$i] = $colour. $ofile[$i] . $normal;
+
+					# if e was given as well mark all following
+					# empty lines with ____ in red
+					if (defined($mod) and $mod =~ /e/) {
+						while ($i<scalar(@ofile) - 1 and $ofile[$i+1] =~ /^$/) {
+							# mark with red ____
+							$ofile[$i+1] = $redunderscore . $ofile[$i+1] . $normal;
+							# increase i
+							$i++;
+						}
+					}
+
+				}
+			}
+		}
+	} elsif ($command eq "a") {
+		# there is no pattern or modifier for append
+		# the new line has already been appended to ofile
+		# set the colour
+		# append the new text first
+		push @ofile, $text;
+		$ofile[$#ofile] = $colour . $ofile[$#ofile] . $normal;
+
+	} elsif ($command eq "i") {
+		for (my $i=0; $i<scalar(@ofile); $i++) {
+			# modifier could be i or a or b. b is default
+			# only i is present, insert before
+			if (defined($mod) and $mod =~ /i/) {
+				# mod is i or ib. b is the default
+				if ($mod !~ /a/) {
+					if ($ofile[$i] =~ /$pattern/i) {
+						# the line matches
+						# insert the text before the line
+						# only if the line has not been deleted.
+						# deleted lines start with $red
+						if ($ofile[$i] !~ /^\e.31m/) {
+							splice @ofile, $i, 0, $text;
+							# set colour
+							$ofile[$i] = $colour . $ofile[$i] . $normal;
+							# increase i to skip over inserted line
+							$i++;
+						}
+					}
+				} else {
+					# mod is ai
+					if ($ofile[$i] =~ /$pattern/i) {
+						# the line matches
+						# insert the text after the line
+						# only if the line has not been deleted.
+						if ($ofile[$i] !~ /^\e.31m/) {
+							splice @ofile, $i+1, 0, $text;
+							# set colour
+							$ofile[$i+1] = $colour . $ofile[$i+1] . $normal;
+							# increase i to skip over inserted line
+							$i++;
+						}
+					}
+				}
+			} elsif (defined($mod) and $mod =~ /a/) {
+				# mod is a only
+				# insert line after matched line
+				if ($ofile[$i] =~ /$pattern/) {
+					# the line matches
+					# insert the text after the line
+					# only if the line has not been deleted
+					if ($ofile[$i] !~ /^\e.31m/) {
+						splice @ofile, $i+1, 0, $text;
+						# set colour
+						$ofile[$i+1] = $colour . $ofile[$i+1] . $normal;
+						# increase i to skip over inserted line
+						$i++;
+					}
+				}
+			} else {
+				# there is no mod
+				if ($ofile[$i] =~ /$pattern/) {
+					# the line matches
+					# insert the text before the line
+					# only if the line has not been deleted
+					if ($ofile[$i] !~ /^\e.31m/) {
+						splice @ofile, $i, 0, $text;
+						# set colour
+						$ofile[$i] = $colour . $ofile[$i] . $normal;
+						# increase i to skip over inserted line
+						$i++;
+					}
+				}
+			}
+
+		}
+	}
 	return;
 }
 
@@ -409,7 +532,7 @@ sub delete {
 				if ($efile[$i] =~ /$pattern/i) {
 					# delete line by not pushing it to @temparray
 					# set the colour to red in ofile
-					$self->setcolour($i, $red);
+#					$self->setcolour($pattern, "i", $red, "d");
 
 					# if modifier e given, delete following empty lines
 					if ($option =~ "e") {
@@ -430,7 +553,8 @@ sub delete {
 							# skip this line
 							
 							# mark this empty line with red ___ in ofile
-							$self->setcolour($i+1, $redunderscore);
+#							$pattern = "^\$";
+#							$self->setcolour($pattern, "", $redunderscore, "d");
 							$i++;
 						}
 					}
@@ -459,7 +583,7 @@ sub delete {
 					# by moving not pushing them.
 					# done by incrementing $i
 					# set colour of deleted line to red
-					$self->setcolour($i, $red);
+#					$self->setcolour($pattern, "", $red, "d");
 					
 					# do not go past end of file
 					while ($i < scalar(@efile) - 1 and $efile[$i+1] =~ /^$/) {
@@ -474,7 +598,8 @@ sub delete {
 						$count++;
 						
 						# mark empty deleted line with red ___
-						$self->setcolour($i+1, $redunderscore);
+#						$pattern = "^\$";
+#						$self->setcolour($pattern, "", $redunderscore, "d");
 						# skip this line empty line due to modifier e
 						$i++;
 					}
@@ -498,9 +623,10 @@ sub delete {
 		for (my $i=0; $i<scalar(@efile); $i++) {
 			# case sensitive search
 			if ($efile[$i] =~ /$pattern/) {
-				# this line is being deleted
-				# set the colour to red in original array
-				$self->setcolour($i, $red);
+				
+				# mark the matching line(s)
+				# in ofile as red.
+#				$self->setcolour($pattern, "", $red, "d");
 				
 				# DEBUG: print the line
 				do {
@@ -515,7 +641,8 @@ sub delete {
 			}
 		}
 	}
-	
+
+
 	# for debug
 	push @debug, "$count lines deleted\n" if $DEBUG;
 	
@@ -529,6 +656,8 @@ sub delete {
 		}
 		print "##################################\n\n";
 	}
+	# set the colour of the deleted lines
+	$self->setcolour($pattern, $option, $red, "d");
 
 	return $count;
 }
@@ -684,11 +813,9 @@ sub append {
 	# string can be : something\nnew line\n\tnew line again\n\tetc
 	push @efile, $list[0];
 
-print "index $#ofile\n";	
-	# push new line onto ofile for display
-	# set the colour of the last line of ofile to green
-	push @ofile, $list[0];
-	$self->setcolour($#ofile, $green);
+	# no pattern or modifier for append
+	# include text to be appended
+	$self->setcolour("", "", $green, "a", $list[0]);
 
 	# for debug
 	if ($DEBUG) {
@@ -709,6 +836,7 @@ print "index $#ofile\n";
 #             2. ref to text to insert
 #             3. ref to temparray
 #             4. modifier a or b , after or before for insert
+#             5. index of changed line so ofile can updated for colour display
 # return: nothing
 #######################################################################
 sub insertline {
@@ -724,6 +852,7 @@ sub insertline {
 	my $rtext = shift;
 	my $rtemparray = shift;
 	my $modi = shift;
+	my $index = shift;
 
 	# for debugging
 	my $dline if $DEBUG;
@@ -733,12 +862,14 @@ sub insertline {
 		# insert text after a line
 		push @{$rtemparray}, ${$rline};
 		push @{$rtemparray}, ${$rtext};
+		
 		# for debug
 		$dline = "old: ${$rline}\nnew: ${$rtext}\n" if $DEBUG;
 	} else {
-		# insert before a line - default
+		# insert text before a line - default
 		push @{$rtemparray}, ${$rtext};
 		push @{$rtemparray}, ${$rline};
+
 		# for debug
 		$dline = "new: ${$rtext}\nold: ${$rline}\n" if $DEBUG;
 	}
@@ -794,18 +925,20 @@ sub insert {
 	# for all elements in list
 	# no of insertions
 	my $count = 0;
-	foreach my $line (@efile) {
+	for (my $i=0; $i<scalar(@efile); $i++) {
 		# copy each line that does not match to temparray
 		# when line matches insert before/after line in temparray
 		if (defined($modi) and $modi =~ /i/) {
 			# check for match
-			if ($line !~ /$pattern/i) {
+			if ($efile[$i] !~ /$pattern/i) {
 				# no match , copy line
-				push @temparray, $line;
+				push @temparray, $efile[$i];
 			} else {
 				# line does match.
 				# insert text before or after
-				$self->insertline(\$line, \$text, \@temparray, $modi);
+				# the index is used so ofile can be updated
+				# to indicate colour changes
+				$self->insertline(\$efile[$i], \$text, \@temparray, $modi, $i);
 
 				# count insertions
 				$count++;
@@ -813,13 +946,13 @@ sub insert {
 		} else {
 			# no i modifier
 			# check for match
-			if ($line !~ /$pattern/) {
+			if ($efile[$i] !~ /$pattern/) {
 				# no match , copy line
-				push @temparray, $line;
+				push @temparray, $efile[$i];
 			} else {
 				# line does match.
-				# insert text before or after
-				$self->insertline(\$line, \$text, \@temparray, $modi);
+				# insert text before -- default
+				$self->insertline(\$efile[$i], \$text, \@temparray, $modi, $i);
 
 				# count insertions
 				$count++;
@@ -838,7 +971,8 @@ sub insert {
 		}
 		print "###########################\n";
 	}
-
+	# set colour in ofile
+	$self->setcolour($pattern, $modi, $green, "i", $text);
 	return $count;
 }
 	

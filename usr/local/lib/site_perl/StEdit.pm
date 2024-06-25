@@ -854,10 +854,6 @@ sub append {
 	# string can be : something\nnew line\n\tnew line again\n\tetc
 	push @efile, $list[0];
 
-	# no pattern or modifier for append
-	# include text to be appended
-	$self->setcolour("", "", $green, "a", $list[0]);
-
 	# for debug
 	if ($DEBUG) {
 		foreach my $item (@debug) {
@@ -865,7 +861,9 @@ sub append {
 		}
 		print "#############################################\n\n";
 	}
-
+	# no pattern or modifier for append
+	# include text to be appended
+	$self->setcolour("", "", $green, "a", $list[0]);
 	
 	return 1;
 }

@@ -1,2 +1,2 @@
-*.txt
-*.ptkdb
+usr/local/bin/*.txt
+usr/loal/bin/*.ptkdb

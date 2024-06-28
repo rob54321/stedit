@@ -370,21 +370,37 @@ sub hinsert {
 	my $index = shift @_;
 	my $mod = shift @_;
 	my $line = shift @_;
-	
+
 	if ((defined($mod)) and ($mod ne "a")) {
 		# default insert or b
 		# line goes before matching line
 		# copy lines to next line starting at bottom
 		# insert the new line with colour green
-		for (my $i=$maxIndex; $i<=$index; $i--) {
-			# copy whole record
-			$file{$i+1} = $file{$i};
+		for (my $i=$maxIndex; $i>=$index; $i--) {
+			# copy whole record, colour then line
+			$file{$i+1}->[0] = $file{$i}->[0];
+			$file{$i+1}->[1] = $file{$i}->[1];
 		}
 		
 		# insert the new line
 		$file{$index}->[0] = $green;
 		$file{$index}->[1] = $line;
+	} else {
+		# mod contains a.
+		# insert line after matching line
+		# copy lines after index to one down
+		for (my $i=$maxIndex; $i>$index; $i--) {
+			# copy whole record, colour then line
+			$file{$i+1}->[0] = $file{$i}->[0];
+			$file{$i+1}->[1] = $file{$i}->[1];
+		}
+		
+		# insert the new line
+		$file{$index+1}->[0] = $green;
+		$file{$index+1}->[1] = $line;
 	}
+	# increase the maxIndex
+	$maxIndex++;
 }
 		
 ####################################################################
@@ -404,7 +420,7 @@ sub setcolour {
 	my $mod = shift @_;
 	my $command = shift @_;
 	my $text = shift @_;
-	
+
 	# find the line that matches the pattern
 	if ($command eq "d") {
 		# search for the pattern in ofile
@@ -469,51 +485,42 @@ sub setcolour {
 						# the line matches
 						# insert the text before the line
 						# move the matching line and successive lines down
-						$self->hinsert($i, "b", $file{$i}->[1]);
+						# pass the new text for insertion
+						$self->hinsert($i, "b", $text);
+						# move counter to next line
+						$i++;
 					}
 				} else {
-					# mod is ai
-					if ($ofile[$i] =~ /$pattern/i) {
+					# mod is ai ignore red lines
+					if (($file{$i}->[1] =~ /$pattern/i) and ($file{$i}->[0] ne $red)) {
 						# the line matches
 						# insert the text after the line
 						# only if the line has not been deleted.
-						if ($ofile[$i] !~ /^\e.31m/) {
-							splice @ofile, $i+1, 0, $text;
-							# set colour
-#							$ofile[$i+1] = $colour . $ofile[$i+1] . $normal;
-							# increase i to skip over inserted line
-							$i++;
-						}
+						$self->hinsert($i, "a", $text);
+						# move counter to next line
+						$i++;
 					}
 				}
 			} elsif (defined($mod) and $mod =~ /a/) {
 				# mod is a only
 				# insert line after matched line
-				if ($ofile[$i] =~ /$pattern/) {
+				if (($file{$i}->[1] =~ /$pattern/) and ($file{$i}->[0] ne $red)) {
 					# the line matches
 					# insert the text after the line
 					# only if the line has not been deleted
-					if ($ofile[$i] !~ /^\e.31m/) {
-						splice @ofile, $i+1, 0, $text;
-						# set colour
-#						$ofile[$i+1] = $colour . $ofile[$i+1] . $normal;
-						# increase i to skip over inserted line
-						$i++;
-					}
+					$self->hinsert($i, "a", $text);
+					# move counter to next line
+					$i++;
 				}
 			} else {
 				# there is no mod
-				if ($ofile[$i] =~ /$pattern/) {
+				if (($file{$i}->[1] =~ /$pattern/) and ($file{$i}->[0] ne $red)) {
 					# the line matches
 					# insert the text before the line
 					# only if the line has not been deleted
-					if ($ofile[$i] !~ /^\e.31m/) {
-						splice @ofile, $i, 0, $text;
-						# set colour
-#						$ofile[$i] = $colour . $ofile[$i] . $normal;
-						# increase i to skip over inserted line
-						$i++;
-					}
+					$self->hinsert($i, "b", $text);
+					# move counter to next line
+					$i++;
 				}
 			}
 
@@ -557,6 +564,8 @@ sub setcolour {
 			}
 		}
 	}
+print "maxIndex $maxIndex\n";
+
 	return;
 }
 
@@ -1033,6 +1042,7 @@ sub insert {
 			} else {
 				# line does match.
 				# insert text before -- default
+
 				$self->insertline(\$efile[$i], \$text, \@temparray, $modi, $i);
 
 				# count insertions
@@ -1053,7 +1063,9 @@ sub insert {
 		print "###########################\n";
 	}
 	# set colour in ofile
-#	$self->setcolour($pattern, $modi, $green, "i", $text);
+
+	$self->setcolour($pattern, $modi, "i", $text);
+
 	return $count;
 }
 	

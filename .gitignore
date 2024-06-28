@@ -1,2 +1,3 @@
-usr/local/bin/file.txt
-usr/loal/bin/*.ptkdb
+*.txt
+*.ptkdb
+hinsert.pl

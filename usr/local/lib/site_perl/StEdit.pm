@@ -26,7 +26,16 @@ my $fname;
 # to indicate the changes made.
 my @ofile = ();
 # array to hold the edited file line by line.
+
 my @efile = ();
+
+# records of the original file
+# index => [colour, lineref]
+my %file;
+
+# index for no of lines in a file
+# starts from 0
+my $maxIndex;
 
 # the colours used for display the file
 # to indicate changes.
@@ -66,19 +75,29 @@ sub new {
 	#open file for reading
 	open (my $fh, "<", $fname) or die "new: Could not open $fname: $!\n";
 	# read all lines
+	# i is for the index
+	my $i = 0;
 	while (my $line = <$fh>) {
 		# remove terminator at end
 		chomp($line);
 		# add to array
-		push (@ofile, $line);
+		push (@efile, $line);
+
+		# setup the hash with records of the original file
+		# format index => [colour, line]
+		# colour is n - normal, r - red, g - green, y - yellow, b - blue
+		$file{$i} = ["", $line];
+
+		# increment i for the next line
+		$i++;
 	}
+
+	# set the max index for the file
+	$maxIndex = $i - 1;
 
 	# close file
 	close $fh;
 	
-	# set the array for the file to be edited
-	@efile = @ofile;
-		
 	my $self = {};
 	bless $self, $class;
 	return $self;
@@ -335,17 +354,47 @@ sub parsearg {
 	die "StEdit->parsarg(): The arg = $arg for command $cmd is malformed\n" if scalar(@$reflist) == 0 or ! defined($reflist->[0]);
 
 }
-
+####################################################################
+# sub to insert a record into the hash %file.
+# The modifier a | b (= default) will insert after
+# or before.
+# %file = (index => [colour, line])
+# parameters: index of matching line
+#             modifier, a or b or empty
+#             line to be inserted
+# return: nothing
+####################################################################
+sub hinsert {
+	# get parameters
+	my $self = shift @_;
+	my $index = shift @_;
+	my $mod = shift @_;
+	my $line = shift @_;
+	
+	if ((defined($mod)) and ($mod ne "a")) {
+		# default insert or b
+		# line goes before matching line
+		# copy lines to next line starting at bottom
+		# insert the new line with colour green
+		for (my $i=$maxIndex; $i<=$index; $i--) {
+			# copy whole record
+			$file{$i+1} = $file{$i};
+		}
+		
+		# insert the new line
+		$file{$index}->[0] = $green;
+		$file{$index}->[1] = $line;
+	}
+}
+		
 ####################################################################
 # setcolour
 # this method sets the colour in the original file
 # red deleted line
 # green for added line by insert or append
 # yellow for line changed by subst
-# index is the index for efile which changes. The same
-# line in ofile must be found and it's index used
 # append command has the correct index. search not necessary
-# parameters: pattern to match, modifier, colour, command a or i s d, new text|replacement text
+# parameters: pattern to match, modifier, command a or i s d, new text|replacement text
 # return: nothing
 ####################################################################
 sub setcolour {
@@ -353,7 +402,6 @@ sub setcolour {
 	my $self = shift @_;
 	my $pattern = shift @_;
 	my $mod = shift @_;
-	my $colour = shift @_;
 	my $command = shift @_;
 	my $text = shift @_;
 	
@@ -362,19 +410,19 @@ sub setcolour {
 		# search for the pattern in ofile
 		# and mark all with the colour
 
-		for (my $i = 0; $i<scalar(@ofile); $i++) {
+		for (my $i = 0; $i<= $maxIndex; $i++) {
 			if (defined($mod) and $mod =~ /i/) {
 				
 				# modifier contains i
-				if ($ofile[$i] =~ /$pattern/i) {
-					$ofile[$i] = $colour . $ofile[$i] . $normal;
+				if ($file{$i}->[1] =~ /$pattern/i) {
+					$file{$i}->[0] = $red;
 
 					# if e was given as well mark all following
 					# empty lines with ____ in red
 					if (defined($mod) and $mod =~ /e/) {
-						while ($i<scalar(@ofile) - 1 and $ofile[$i+1] =~ /^$/) {
+						while ($i<$maxIndex and $file{$i+1}->[1] =~ /^$/) {
 							# mark with red ____
-							$ofile[$i+1] = $redunderscore . $ofile[$i+1] . $normal;
+							$file{$i+1}->[0] = $redunderscore;
 							# increase i
 							$i++;
 						}
@@ -383,15 +431,15 @@ sub setcolour {
 
 			} else {
 				# no i modifier
-				if ($ofile[$i] =~ /$pattern/) {
-					$ofile[$i] = $colour. $ofile[$i] . $normal;
+				if ($file{$i}->[1] =~ /$pattern/) {
+					$file{$i}->[0] = $red;
 
 					# if e was given as well mark all following
 					# empty lines with ____ in red
 					if (defined($mod) and $mod =~ /e/) {
-						while ($i<scalar(@ofile) - 1 and $ofile[$i+1] =~ /^$/) {
+						while ($i<$maxIndex and $file{$i+1}->[1] =~ /^$/) {
 							# mark with red ____
-							$ofile[$i+1] = $redunderscore . $ofile[$i+1] . $normal;
+							$file{$i+1}->[0] = $redunderscore;
 							# increase i
 							$i++;
 						}
@@ -405,28 +453,23 @@ sub setcolour {
 		# the new line has already been appended to ofile
 		# set the colour
 		# append the new text first
-		push @ofile, $text;
-		$ofile[$#ofile] = $colour . $ofile[$#ofile] . $normal;
+		$file{++$maxIndex}->[0] = $green;
+		$file{$maxIndex}->[1] = $text;
 
 	} elsif ($command eq "i") {
-		for (my $i=0; $i<scalar(@ofile); $i++) {
+		for (my $i=0; $i<=$maxIndex; $i++) {
 			# modifier could be i or a or b. b is default
 			# only i is present, insert before
 			if (defined($mod) and $mod =~ /i/) {
 				# mod is i or ib. b is the default
 				if ($mod !~ /a/) {
-					if ($ofile[$i] =~ /$pattern/i) {
+					
+					# ignore delete lines in red
+					if (($file{$i}->[1] =~ /$pattern/i) and ($file{$i}->[0] ne $red)) {
 						# the line matches
 						# insert the text before the line
-						# only if the line has not been deleted.
-						# deleted lines start with $red
-						if ($ofile[$i] !~ /^\e.31m/) {
-							splice @ofile, $i, 0, $text;
-							# set colour
-							$ofile[$i] = $colour . $ofile[$i] . $normal;
-							# increase i to skip over inserted line
-							$i++;
-						}
+						# move the matching line and successive lines down
+						$self->hinsert($i, "b", $file{$i}->[1]);
 					}
 				} else {
 					# mod is ai
@@ -437,7 +480,7 @@ sub setcolour {
 						if ($ofile[$i] !~ /^\e.31m/) {
 							splice @ofile, $i+1, 0, $text;
 							# set colour
-							$ofile[$i+1] = $colour . $ofile[$i+1] . $normal;
+#							$ofile[$i+1] = $colour . $ofile[$i+1] . $normal;
 							# increase i to skip over inserted line
 							$i++;
 						}
@@ -453,7 +496,7 @@ sub setcolour {
 					if ($ofile[$i] !~ /^\e.31m/) {
 						splice @ofile, $i+1, 0, $text;
 						# set colour
-						$ofile[$i+1] = $colour . $ofile[$i+1] . $normal;
+#						$ofile[$i+1] = $colour . $ofile[$i+1] . $normal;
 						# increase i to skip over inserted line
 						$i++;
 					}
@@ -467,7 +510,7 @@ sub setcolour {
 					if ($ofile[$i] !~ /^\e.31m/) {
 						splice @ofile, $i, 0, $text;
 						# set colour
-						$ofile[$i] = $colour . $ofile[$i] . $normal;
+#						$ofile[$i] = $colour . $ofile[$i] . $normal;
 						# increase i to skip over inserted line
 						$i++;
 					}
@@ -487,28 +530,28 @@ sub setcolour {
 					if ($ofile[$i] =~ /$pattern/i) {
 						$ofile[$i] =~ s/$pattern/$text/i;
 						# set colour
-						$ofile[$i] = $colour . $ofile[$i] . $normal;
+#						$ofile[$i] = $colour . $ofile[$i] . $normal;
 					}	
 				} elsif (defined($mod) and ($mod eq "ig" or $mod eq "gi")) {
 					# matching line modifier is ig
 					if ($ofile[$i] =~ /$pattern/i) {
 						$ofile[$i] =~ s/$pattern/$text/ig;
 						# set colour
-						$ofile[$i] = $colour . $ofile[$i] . $normal;
+#						$ofile[$i] = $colour . $ofile[$i] . $normal;
 					}
 				} elsif (defined($mod) and ($mod eq "g")) {
 					# matching line modifier is ig
 					if ($ofile[$i] =~ /$pattern/) {
 						$ofile[$i] =~ s/$pattern/$text/g;
 						# set colour
-						$ofile[$i] = $colour . $ofile[$i] . $normal;
+#						$ofile[$i] = $colour . $ofile[$i] . $normal;
 					}
 				} else {
 					# matching line modifier no mofifier
 					if ($ofile[$i] =~ /$pattern/) {
 						$ofile[$i] =~ s/$pattern/$text/;
 						# set colour
-						$ofile[$i] = $colour . $ofile[$i] . $normal;
+#						$ofile[$i] = $colour . $ofile[$i] . $normal;
 					}
 				}
 			}
@@ -695,8 +738,7 @@ sub delete {
 		print "##################################\n\n";
 	}
 	# set the colour of the deleted lines
-	$self->setcolour($pattern, $option, $red, "d");
-
+	$self->setcolour($pattern, $option, "d");
 	return $count;
 }
 
@@ -810,7 +852,7 @@ sub subst {
 	}
 
 	# set colours in ofile
-	$self->setcolour($pattern, $modi, $yellow, "s", $replacement);
+#	$self->setcolour($pattern, $modi, $yellow, "s", $replacement);
 	
 	# return no of matches
 	return $count;
@@ -863,7 +905,7 @@ sub append {
 	}
 	# no pattern or modifier for append
 	# include text to be appended
-	$self->setcolour("", "", $green, "a", $list[0]);
+	$self->setcolour("", "", "a", $list[0]);
 	
 	return 1;
 }
@@ -1011,7 +1053,7 @@ sub insert {
 		print "###########################\n";
 	}
 	# set colour in ofile
-	$self->setcolour($pattern, $modi, $green, "i", $text);
+#	$self->setcolour($pattern, $modi, $green, "i", $text);
 	return $count;
 }
 	
@@ -1078,8 +1120,11 @@ sub cdisplay {
 
 	# print each line
 	print "##################### $fname /#######################\n";
-	foreach my $line (@ofile) {
-		print "$line\n";
+	for (my $i=0; $i<=$maxIndex; $i++) {
+		# print each line in the colour in the record
+		my $colour = $file{$i}->[0];
+		my $cline = $colour . $file{$i}->[1] . $normal;
+		print "$cline\n";
 	}
 	print "#####################################################\n\n";
 }

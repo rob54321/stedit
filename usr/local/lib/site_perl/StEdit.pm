@@ -15,17 +15,8 @@ use strict;
 use warnings;
 use File::Copy;
 
-# DEBUG FLAG, true for debugging or else false
-my $DEBUG = 0;
-
 # file name of file to be edited
 my $fname;
-
-# array to hold the original file
-# so that it can be displayed in colour
-# to indicate the changes made.
-my @ofile = ();
-# array to hold the edited file line by line.
 
 my @efile = ();
 
@@ -69,8 +60,6 @@ sub new {
 	
 	# get file name
 	$fname = shift;
-	# get DEBUG flag if it is passed
-	$DEBUG = shift if $count == 3;;
 	
 	#open file for reading
 	open (my $fh, "<", $fname) or die "new: Could not open $fname: $!\n";
@@ -206,13 +195,6 @@ sub script {
 		}
 
 	}	
-	# for debug
-	do {
-		for (my $i=0; $i<scalar(@cmdlist); $i++) {
-			print "cmdlist[$i] = [$cmdlist[$i]]\n";
-		}
-		print "backup flag = $backup\n";
-	} if $DEBUG;
 
 	# @cmdlist = (-a, /text/, -l, -i, /patten/text/ia, ...)
 	# for each command call appropriate method
@@ -341,15 +323,6 @@ sub parsearg {
 		
 	}
 
-	# print all arguments form @list
-	do {
-		print "################StEdit->parsearg()######################\n";
-		print "command $cmd: no of reflist args ". scalar(@$reflist) . "\n";
-		for (my $i=0; $i<scalar(@$reflist); $i++) {
-			print "reflist[$i]: [$reflist->[$i]]\n" if $reflist->[$i];
-		}
-		print "################################################\n\n";
-	} if $DEBUG;
 	# check that the arg is not mal formed
 	die "StEdit->parsarg(): The arg = $arg for command $cmd is malformed\n" if scalar(@$reflist) == 0 or ! defined($reflist->[0]);
 
@@ -527,44 +500,43 @@ sub setcolour {
 		}
 	} elsif ($command eq "s") {
 		# subst command, modifiers are i or g or nothing
-		for (my $i=0; $i<scalar(@ofile); $i++) {
+		for (my $i=0; $i<=$maxIndex; $i++) {
 			# find matching line only if it was
 			# not deleted.
-			if ($ofile[$i] !~ /^\e.31m/) {
+			if ($file{$i}->[0] ne $red) {
 				# check modifier
 				if (defined($mod) and ($mod eq "i")) {
 					# matching line
-					if ($ofile[$i] =~ /$pattern/i) {
-						$ofile[$i] =~ s/$pattern/$text/i;
+					if ($file{$i}->[1] =~ /$pattern/i) {
+						$file{$i}->[1] =~ s/$pattern/$text/i;
 						# set colour
-#						$ofile[$i] = $colour . $ofile[$i] . $normal;
+						$file{$i}->[0] = $yellow;
 					}	
 				} elsif (defined($mod) and ($mod eq "ig" or $mod eq "gi")) {
 					# matching line modifier is ig
-					if ($ofile[$i] =~ /$pattern/i) {
-						$ofile[$i] =~ s/$pattern/$text/ig;
+					if ($file{$i}->[1] =~ /$pattern/i) {
+						$file{$i}->[1] =~ s/$pattern/$text/ig;
 						# set colour
-#						$ofile[$i] = $colour . $ofile[$i] . $normal;
+						$file{$i}->[0] = $yellow;
 					}
 				} elsif (defined($mod) and ($mod eq "g")) {
 					# matching line modifier is ig
-					if ($ofile[$i] =~ /$pattern/) {
-						$ofile[$i] =~ s/$pattern/$text/g;
+					if ($file{$i}->[1] =~ /$pattern/) {
+						$file{$i}->[1] =~ s/$pattern/$text/g;
 						# set colour
-#						$ofile[$i] = $colour . $ofile[$i] . $normal;
+						$file{$i}->[0] = $yellow;
 					}
 				} else {
 					# matching line modifier no mofifier
-					if ($ofile[$i] =~ /$pattern/) {
-						$ofile[$i] =~ s/$pattern/$text/;
+					if ($file{$i}->[1] =~ /$pattern/) {
+						$file{$i}->[1] =~ s/$pattern/$text/;
 						# set colour
-#						$ofile[$i] = $colour . $ofile[$i] . $normal;
+						$file{$i}->[0] = $yellow;
 					}
 				}
 			}
 		}
 	}
-print "maxIndex $maxIndex\n";
 
 	return;
 }
@@ -580,9 +552,6 @@ print "maxIndex $maxIndex\n";
 #         undefined on error
 ###################################################################
 sub delete {
-	# for debug
-	my @debug = ("################# StEdit->delete() ####################\n") if $DEBUG;
-	
 	my $self = shift;
 
 	# cmd line argument like /pattern/ or pattern/i
@@ -597,9 +566,6 @@ sub delete {
 	my $option;
 	$option = $list[1] if $list[1];
 
-	# line number deleted for DEBUG
-	my $lineno if $DEBUG;
-
 	# delete all lines that match address
 	# if address is "" then delete all lines
 	# copy non matching lines to new array
@@ -609,9 +575,6 @@ sub delete {
 
 	# reset count for no of lines deleted.
 	my $count = 0;
-
-	# for debug
-	push @debug, "arg = $arg\n" if $DEBUG;
 
 	# if modifier is i
 	if (defined($option)) {
@@ -632,12 +595,6 @@ sub delete {
 						# do not go past end of file
 						while ($i < scalar(@efile) - 1 and $efile[$i+1] =~ /^$/) {
 							
-							# DEBUG: print the line
-							do {
-								$lineno = $i + 1;
-								push @debug, "deleted line $lineno: $efile[$i]\n";
-							} if $DEBUG;
-							# delete line and count it
 							# count the deleted lines
 							$count++;
 							# skip this line
@@ -649,11 +606,6 @@ sub delete {
 						}
 					}
 					
-					# DEBUG: print the line
-					do {
-						$lineno = $i + 1;
-						push @debug, "deleted line $lineno: $efile[$i]\n";
-					} if $DEBUG;
 					# delete line and count it
 					$count++;
 
@@ -678,26 +630,13 @@ sub delete {
 					# do not go past end of file
 					while ($i < scalar(@efile) - 1 and $efile[$i+1] =~ /^$/) {
 						
-						# DEBUG: print the line
-						do {
-							$lineno = $i + 1;
-							push @debug, "deleted line $lineno: $efile[$i]\n";
-						} if $DEBUG;
 						# delete line and count it
 						# count the deleted lines
 						$count++;
 						
-						# mark empty deleted line with red ___
-#						$pattern = "^\$";
-#						$self->setcolour($pattern, "", $redunderscore, "d");
 						# skip this line empty line due to modifier e
 						$i++;
 					}
-					# DEBUG: print the line
-					do {
-						$lineno = $i + 1;
-						push @debug, "deleted line $lineno: $efile[$i]\n";
-					} if $DEBUG;
 					# delete line and count it
 					$count++;
 
@@ -718,11 +657,6 @@ sub delete {
 				# in ofile as red.
 #				$self->setcolour($pattern, "", $red, "d");
 				
-				# DEBUG: print the line
-				do {
-					$lineno = $i + 1;
-					push @debug, "deleted line $lineno: $efile[$i]\n";
-				} if $DEBUG;
 				# delete line and count it
 				$count++;
 			} else {
@@ -733,19 +667,9 @@ sub delete {
 	}
 
 
-	# for debug
-	push @debug, "$count lines deleted\n" if $DEBUG;
-	
 	# set efile to new array
 	@efile = @temparray;
 
-	# for debug
-	if ($DEBUG) {
-		foreach my $item (@debug) {
-			print "$item";
-		}
-		print "##################################\n\n";
-	}
 	# set the colour of the deleted lines
 	$self->setcolour($pattern, $option, "d");
 	return $count;
@@ -758,9 +682,6 @@ sub delete {
 #         undefined on error
 ################################################################################
 sub subst {
-	# for debug
-	my @debug = ("##################### StEdit->subst()#####################\n") if $DEBUG;
-
 	# there must be 2 parameters passed
 	my $self = shift;
 	my $arg = shift;
@@ -779,14 +700,7 @@ sub subst {
 	my $pattern = $list[0];
 	my $replacement = $list[1];
 	my $modi = $list[2] if $list[2];
-	# for debug
-	do {
-		if ($modi) {
-			push @debug, "pattern = [$pattern] : replacement = [$replacement] : modifier = [$modi]\n";
-		} else {
-			push @debug, "pattern = [$pattern] : replacement = [$replacement] : no modifiers\n";
-		}
-	} if $DEBUG;
+
 	# the modifier can be
 	# i - case insensitive
 	# g - global search in line
@@ -797,18 +711,11 @@ sub subst {
 	# substitutions depend on the modifier
 	# "" means no modifier
 
-	# for debugging
-	my $oldline if $DEBUG;
-
 	# modi could be i or g or ig or gi or nothing
 	if (defined($modi) and $modi eq "g") {
 		# modifier = g
 		foreach my $line (@efile) {
-			# for debug
-			$oldline = $line if $DEBUG;
 			$noofmatches = $line =~ s/$pattern/$replacement/g;
-			#for debug
-			push @debug, "old: [$oldline]\nnew: [$line]\n" if $DEBUG and ($noofmatches > 0);
 			
 			# add up matches
 			$count = $count + $noofmatches;
@@ -816,22 +723,14 @@ sub subst {
 	} elsif (defined($modi) and $modi eq "i") {
 		# modifier = i
 		foreach my $line (@efile) {
-			# for debug
-			$oldline = $line if $DEBUG;
 			$noofmatches = $line =~ s/$pattern/$replacement/i;
-			#for debug
-			push @debug, "old: [$oldline]\nnew: [$line]\n" if $DEBUG and ($noofmatches > 0);
 			
 			$count = $count + $noofmatches;
 		}
 	} elsif (defined($modi) and ($modi =~ /i/ and $modi =~ /g/)) {
 		# modifier = ig
 		foreach my $line (@efile) {
-			# for debug
-			$oldline = $line if $DEBUG;
 			$noofmatches = $line =~ s/$pattern/$replacement/ig;
-			#for debug
-			push @debug, "old: [$oldline]\nnew: [$line]\n" if $DEBUG and ($noofmatches > 0);
 			
 			$count = $count + $noofmatches;
 		}
@@ -840,28 +739,14 @@ sub subst {
 		# no modifier
 		foreach my $line (@efile) {
 			# for debug
-			$oldline = $line if $DEBUG;
 			$noofmatches = $line =~ s/$pattern/$replacement/;
-			#for debug
-			push @debug, "old: [$oldline]\nnew: [$line]\n" if $DEBUG and ($noofmatches > 0);
 			
 			$count = $count + $noofmatches;
 		}
 	}
 
-	# for debug
-	push @debug, "$count substitutions\n" if $DEBUG;
-	
-	# for debug
-	if ($DEBUG) {
-		foreach my $item (@debug) {
-			print "$item";
-		}
-		print "###########\n";
-	}
-
 	# set colours in ofile
-#	$self->setcolour($pattern, $modi, $yellow, "s", $replacement);
+	$self->setcolour($pattern, $modi, "s", $replacement);
 	
 	# return no of matches
 	return $count;
@@ -874,15 +759,10 @@ sub subst {
 #         undefined on error
 ##########################################################################
 sub append {
-	# for debug
-	my @debug = ("######################## StEdit->append()########################\n") if $DEBUG;
 	
 	#get parameters
 	my $count = scalar(@_);
 
-	# for debug
-	push @debug, "no of parameters = $count\n" if $DEBUG;
-	
 	if ($count != 2) {
 		warn "append error: $count parameters passed";
 		return;
@@ -892,9 +772,6 @@ sub append {
 	my $self = shift;
 	my $arg = shift;
 
-	# for debug
-	push @debug, "text = $arg\n" if $DEBUG;
-	
 	# list for parsed arguments
 	my @list;
 
@@ -905,13 +782,6 @@ sub append {
 	# string can be : something\nnew line\n\tnew line again\n\tetc
 	push @efile, $list[0];
 
-	# for debug
-	if ($DEBUG) {
-		foreach my $item (@debug) {
-			print "$item";
-		}
-		print "#############################################\n\n";
-	}
 	# no pattern or modifier for append
 	# include text to be appended
 	$self->setcolour("", "", "a", $list[0]);
@@ -944,28 +814,18 @@ sub insertline {
 	my $modi = shift;
 	my $index = shift;
 
-	# for debugging
-	my $dline if $DEBUG;
-	
 	# insert
 	if (defined($modi) and $modi =~ /a/) {
 		# insert text after a line
 		push @{$rtemparray}, ${$rline};
 		push @{$rtemparray}, ${$rtext};
 		
-		# for debug
-		$dline = "old: ${$rline}\nnew: ${$rtext}\n" if $DEBUG;
 	} else {
 		# insert text before a line - default
 		push @{$rtemparray}, ${$rtext};
 		push @{$rtemparray}, ${$rline};
-
-		# for debug
-		$dline = "new: ${$rtext}\nold: ${$rline}\n" if $DEBUG;
 	}
 
-	# for debugging
-	print "$dline" if $DEBUG;
 	return;
 }
 #################################################################
@@ -982,9 +842,6 @@ sub insertline {
 #          0  on match not found
 ################################################################
 sub insert {
-	# for debug
-	my @debug = ("################## StEdit->inser()t #########################\n") if $DEBUG;
-	
 	# get parameters
 	my $self = shift;
 	my $arg = shift;
@@ -1008,8 +865,6 @@ sub insert {
 			die "StEdit->insert(): Invalid modifier $modi";
 		}
 	}
-
-	push @debug, "pattern = $pattern: modi = $modi\n" if $DEBUG;
 
 	# insert text before/after case (in) sensitive to each matching line.
 	# for all elements in list
@@ -1053,16 +908,7 @@ sub insert {
 	# copy temp array to efile
 	@efile = @temparray;
 
-	# for debug
-	push @debug, "$count times inserted\n" if $DEBUG;
-	# for debug
-	if ($DEBUG) {
-		foreach my $item (@debug) {
-			print "$item";
-		}
-		print "###########################\n";
-	}
-	# set colour in ofile
+	# set colour in file
 
 	$self->setcolour($pattern, $modi, "i", $text);
 
@@ -1086,8 +932,6 @@ sub write {
 	
 	# get backup flag
 	my $backup = shift @_;
-
-	print "StEdit->write() filename: $writefile\n" if $DEBUG;
 
 	# make a backup copy of the original file to fname.bak if -b switch given
 	

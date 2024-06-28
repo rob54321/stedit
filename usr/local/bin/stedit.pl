@@ -23,9 +23,6 @@ my $editor;
 # subcontrol object
 my $subcontrol;
 
-# turn debugging off by default
-$DEBUG = 0;
-
 ###############################################################
 # command line switches for stedit.pl
 # -a text to be appended
@@ -55,7 +52,6 @@ my %subhash = (-a => [\&append,  	\$opt_a],
                -o => [\&cdisplay,	\$opt_o],
                -w => [\&write,   	\$opt_w],
                -b => [0,         	\$opt_b],
-			   -D => [0,         	\$DEBUG],
 			   -F => [\&script,  	\$opt_F],
 			   -V => [0,         	\$opt_V]);
 
@@ -150,7 +146,7 @@ sub cdisplay {
 # usage function
 sub usage {
 	print "use ANSI-C quoting \$'...' for interpolation of \\n or \' etc in text arguments\n";
-	print "stedit -f \"full pathname\" optional DEBUG flag\n";
+	print "stedit -f \"full pathname\" \n";
 	print "-d (delete) \"/pattern/ie\"  - i for case insensitive search, e for delete line and following empty lines\n";
 	print "-a (append) \"text\"\n";
 	print "-i (insert) \"/pattern/text to insert/iab\" - -i case insensitive, a|b insert after|before\n";
@@ -159,7 +155,6 @@ sub usage {
 	print "-b (backup file) makes a file.bak, only works with the -w switch\n";
 	print "-l (list edited file)\n";
 	print "-o (list original file with colour changes\n";
-	print "-D (turn debugging on)\n";
 	print "-F (script file name) run commands from file\n";
 	print "-V print version and exit\n";
 	print "pattern could be \$'^some line\$|^or.*another\$|^\$'\n";
@@ -258,39 +253,6 @@ if ($opt_V) {
 	}
 	exit 0;
 }
-
-do {
-	print "############### stedit.pl ########################\n";
-	print "no of arguments " . scalar(@cmdlargs) . "\n";
-	foreach my $arg (@cmdlargs) {
-		print "param: " . $arg . "\n";
-	}
-	print "##################################################\n\n";
-} if $DEBUG;
-
-#####################################################
-# for testing
-# cmdlOrder->new() only sets the flags not
-# associated with subs
-# method cmdlOrder->execsub() will set a switch parameter
-# just before the sub is invoked
-#####################################################
-do {
-print "########### stedit.pl all flags, function independent #####################\n";
-print "opt_a = $opt_a\n" if $opt_a;
-print "opt_d = $opt_d\n" if $opt_d;
-print "opt_f = $opt_f\n" if $opt_f;
-print "opt_h = $opt_h\n" if $opt_h;
-print "opt_i = $opt_i\n" if $opt_i;
-print "opt_l = $opt_l\n" if $opt_l;
-print "opt_s = $opt_s\n" if $opt_s;
-print "opt_w = $opt_w\n" if $opt_w;
-print "DEBUG = $DEBUG\n" if $DEBUG;
-print "opt_V = $opt_V\n" if $opt_V;
-print "##############################################\n\n";
-} if $DEBUG;
-#####################################################
-
 
 # create the editor instance
 # this must be done before

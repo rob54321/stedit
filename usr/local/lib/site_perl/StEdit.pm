@@ -404,7 +404,12 @@ sub setcolour {
 				
 				# modifier contains i
 				if ($file{$i}->[1] =~ /$pattern/i) {
-					$file{$i}->[0] = $red;
+					# if the line is blank mark with red ____
+					if ($file{$i}->[1] eq "") {
+						$file{$i}->[0] = $redunderscore;
+					} else {
+						$file{$i}->[0] = $red;
+					}
 
 					# if e was given as well mark all following
 					# empty lines with ____ in red
@@ -422,6 +427,12 @@ sub setcolour {
 				# no i modifier
 				if ($file{$i}->[1] =~ /$pattern/) {
 					$file{$i}->[0] = $red;
+					# if the line is blank mark with red ____
+					if ($file{$i}->[1] eq "") {
+						$file{$i}->[0] = $redunderscore;
+					} else {
+						$file{$i}->[0] = $red;
+					}
 
 					# if e was given as well mark all following
 					# empty lines with ____ in red
@@ -509,6 +520,8 @@ sub setcolour {
 					# matching line
 					if ($file{$i}->[1] =~ /$pattern/i) {
 						$file{$i}->[1] =~ s/$pattern/$text/i;
+						# append the match in blue to the line
+						$file{$i}->[1] = $file{$i}->[1] . " " . "\t" . $cyan . $& . "/" . $yellow . $text;
 						# set colour
 						$file{$i}->[0] = $yellow;
 					}	

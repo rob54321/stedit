@@ -164,7 +164,9 @@ sub script {
 		} elsif ($script[$i] =~ /-l/) {
 			# command -l does not take a parameter;
 			push @cmdlist, "-l";
-
+		} elsif ($script[$i] =~ /-o/) {
+			# command -o does not take a parameter;
+			push @cmdlist, "-o";
 		} elsif ($script[$i] =~ /-w/) {
 			# -w may or may not take a file name parameter
 			$cmd = "-w";
@@ -253,6 +255,10 @@ sub script {
 													last SWITCH;
 												};
 
+					$cmdlist[$i] =~ /-o/ && do {	# display the file, no parameter required
+													$self->cdisplay();
+													last SWITCH;
+												};
 					$cmdlist[$i] =~ /-w/ && do {	#write takes a filename parameter and backup or nobackup
 													# and if -b  given then backup original file
 													if ($i < scalar(@cmdlist) - 1 and $cmdlist[$i+1] !~ /^-/) {

@@ -529,6 +529,8 @@ sub setcolour {
 					# matching line modifier is ig
 					if ($file{$i}->[1] =~ /$pattern/i) {
 						$file{$i}->[1] =~ s/$pattern/$text/ig;
+						# append the match in blue to the line
+						$file{$i}->[1] = $file{$i}->[1] . " " . "\t" . $cyan . $& . "/" . $yellow . $text;
 						# set colour
 						$file{$i}->[0] = $yellow;
 					}
@@ -536,6 +538,8 @@ sub setcolour {
 					# matching line modifier is ig
 					if ($file{$i}->[1] =~ /$pattern/) {
 						$file{$i}->[1] =~ s/$pattern/$text/g;
+						# append the match in blue to the line
+						$file{$i}->[1] = $file{$i}->[1] . " " . "\t" . $cyan . $& . "/" . $yellow . $text;
 						# set colour
 						$file{$i}->[0] = $yellow;
 					}
@@ -543,6 +547,8 @@ sub setcolour {
 					# matching line modifier no mofifier
 					if ($file{$i}->[1] =~ /$pattern/) {
 						$file{$i}->[1] =~ s/$pattern/$text/;
+						# append the match in blue to the line
+						$file{$i}->[1] = $file{$i}->[1] . " " . "\t" . $cyan . $& . "/" . $yellow . $text;
 						# set colour
 						$file{$i}->[0] = $yellow;
 					}

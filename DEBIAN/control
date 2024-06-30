@@ -1,5 +1,5 @@
 Package: stedit
-Version: 2.03
+Version: 2.04
 Architecture: all
 Maintainer: Robert Key robkey@mighty.co.za
 Depends: perl

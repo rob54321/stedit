@@ -46,7 +46,6 @@ my $redunderscore = "\e[31m____";
 
 # constructor.
 # parameters: 1. file name to be edited
-#             2. optional DEBUG FLAG 1 - debugging on, 0 - debugging off
 # the file is read line by line into an array, 
 # a class variable.
 # die if the file cannot be opened for reading

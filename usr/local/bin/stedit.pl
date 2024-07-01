@@ -16,7 +16,7 @@ use StEdit;
 use cmdlOrder;
 # use Getopt::Std;
 
-our ($opt_a, $opt_b, $opt_d, $opt_e, $opt_f, $opt_h, $opt_i, $opt_l, $opt_o, $opt_s, $opt_w, $DEBUG, $opt_F, $opt_V);
+our ($opt_a, $opt_b, $opt_d, $opt_e, $opt_f, $opt_h, $opt_i, $opt_l, $opt_o, $opt_s, $opt_w, $opt_F, $opt_V);
 # editor object of StEdit.pm
 my $editor;
 
@@ -257,9 +257,7 @@ if ($opt_V) {
 # create the editor instance
 # this must be done before
 if ($opt_f) {
-	# turn on debugging in StEdit.pm
-	# pass $DEBUG flag to new
-	$editor = StEdit->new($opt_f, $DEBUG);
+	$editor = StEdit->new($opt_f);
 } else {
 	# no file specified
 	die "stedit: A file name must be specifed to edit\n";

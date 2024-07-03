@@ -146,7 +146,7 @@ sub cdisplay {
 # usage function
 sub usage {
 	print "use ANSI-C quoting \$'...' for interpolation of \\n or \' etc in text arguments\n";
-	print "stedit -f \"full pathname\" \n";
+	print "stedit -f \"full pathname\" OR -F script with filename on line1 ie # filename\n";
 	print "-d (delete) \"/pattern/ie\"  - i for case insensitive search, e for delete line and following empty lines\n";
 	print "-a (append) \"text\"\n";
 	print "-i (insert) \"/pattern/text to insert/iab\" - -i case insensitive, a|b insert after|before\n";
@@ -155,7 +155,7 @@ sub usage {
 	print "-b (backup file) makes a file.bak, only works with the -w switch\n";
 	print "-l (list edited file)\n";
 	print "-o (list original file with colour changes\n";
-	print "-F (script file name) run commands from file\n";
+	print "-F (script file name) run commands from file, file name can be obtained from line 1, # filename or from -f \n";
 	print "-V print version and exit\n";
 	print "pattern could be \$'^some line\$|^or.*another\$|^\$'\n";
 	print "-h (help)\n";
@@ -256,12 +256,12 @@ if ($opt_V) {
 
 # create the editor instance
 # this must be done before
-if ($opt_f) {
-	$editor = StEdit->new($opt_f);
-} else {
+#if ($opt_f) {
+	$editor = StEdit->new();
+#} else {
 	# no file specified
-	die "stedit: A file name must be specifed to edit\n";
-}
+#	die "stedit: A file name must be specifed to edit\n";
+#}
 
 # execute the subs in StEdit.pm
 $subcontrol->execsub();

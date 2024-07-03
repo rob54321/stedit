@@ -66,7 +66,7 @@ sub new {
 			if (exists($refhash->{$switch})) {
 				# switch is valid
 				# check if a sub is associated
-				if ($refhash->{$switch}->[0] == 0) {
+#				if ($refhash->{$switch}->[0] == 0) {
 					# valid switch not associated with sub
 					# the switch must be set to parameter value
 					# or null if there is no parameter
@@ -86,7 +86,7 @@ sub new {
 						# code should never get here
 						print "line 87: Error: switch: $switch\ni: $i\n";
 					}
-				}
+#				}
 			} else {
 				# switch does not exist
 				print "$refswlist->[$i] is invalid\n";

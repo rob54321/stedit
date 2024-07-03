@@ -45,27 +45,73 @@ my $normal = "\e[0m";
 my $redunderscore = "\e[31m____";
 
 # constructor.
-# parameters: 1. file name to be edited
-# the file is read line by line into an array, 
+# parameters: none the $main::opt_F and $main::opt_f are 
+# used to get the file name
+# return: ref to the object created by bless
+# 
+# the file to edit is read line by line into an array, 
 # a class variable.
-# die if the file cannot be opened for reading
+# new first looks for a file to edit in the
+# script file, -F command. If one is not found
+# then it looks for a file name with the -f command.
+# if neither is found, it dies
+# if the script file exists but does not start
+# with # filename then the file name comes from -f.
+# This means stedit.pl -F script will work
+# as long as the script indicates the file name to edit
+# with first line # filename.
 
 sub new {
-	# get no of parameters
+	# get ref to class
 	my $count = scalar(@_);
 	my $class = shift;
-	# if no file name passed - die
-	die "A full path name must be specified\n" if $count < 2;
+
+# print "opt_f = " . $main::opt_f . " opt_F = " . $main::opt_F . " opt_i = [" . $main::opt_i . "]\n";
 	
-	# get file name
-	$fname = shift;
-	
+	# now find the file name. if -F script was given
+	# look in script file line 1 for # file name
+	# if no -F given then look for file name from -f
+	# for lines
+	my $line;
+
+	if (defined($main::opt_F) and ($main::opt_F ne "null")) {
+		# open file for reading
+		open (my $fs, "<", $main::opt_F) or die "StEdit->new(): could not open script file $main::opt_F: $!\n";
+		# read the first line
+		$line = <$fs>;
+		chomp($line);
+		close ($fs);
+		# check if first line is of form # name
+		if ($line =~ /^#\s+(.*)/) {
+			# $1 should be file name if defined
+			if ($1) {
+				$fname = $1;
+				chomp($fname);
+			} else {
+				# $1 not defined, no name found check -f
+				$fname = $main::opt_f if (defined($main::opt_f) and ($main::opt_f ne "null"));
+			}
+		} elsif (defined($main::opt_f) and ($main::opt_f ne "null")) {
+			# file name not found in script file
+			# check file name from -f
+			$fname = $main::opt_f;
+			chomp ($fname);
+		}
+	} elsif (defined($main::opt_f) and ($main::opt_f ne "null")) {
+		# get file name from -f
+		$fname = $main::opt_f;
+		chomp($fname);
+	}
+
+	#if there is  no file name found to edit die
+	die "There is no file to edit\n" unless $fname;
+
 	#open file for reading
 	open (my $fh, "<", $fname) or die "new: Could not open $fname: $!\n";
 	# read all lines
 	# i is for the index
 	my $i = 0;
-	while (my $line = <$fh>) {
+	while ($line = <$fh>) {
 		# remove terminator at end
 		chomp($line);
 		# add to array

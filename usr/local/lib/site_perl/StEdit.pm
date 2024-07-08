@@ -193,54 +193,56 @@ sub script {
 		# only -l does not take a parameter
 		# =w may or may not take a parameter which is a file name
 		# ignored, empty lines, lines with no command, white space, comment lines starting with #
-		if ($script[$i] =~ /(-a|-d|-i|-s)/) {
-			# there is a command
-			# that takes a parameter
-			$cmd = $1;
-			$script[$i] =~ /(-.)\s+(.*)/;
-			# if no parameter, die
-			die "$cmd needs a parameter\n" unless $2;
-			$param = $2;
-			# clean up white space
-			$param =~ s/(\s+)$//g;
-			# push cmd and param onto list
-			push @cmdlist, ($cmd, $param);
-			
-		} elsif ($script[$i] =~ /-l/) {
-			# command -l does not take a parameter;
-			push @cmdlist, "-l";
-		} elsif ($script[$i] =~ /-o/) {
-			# command -o does not take a parameter;
-			push @cmdlist, "-o";
-		} elsif ($script[$i] =~ /-w/) {
-			# -w may or may not take a file name parameter
-			$cmd = "-w";
-			# check for a parameter after -w
-			$script[$i] =~ /(-.)\s+(.*)/;
-			# if there is parameter
-			if (defined $2) {
-				# clean white space after parameter
+		# ignore lines starting with # which is a comment
+		if ($script[$i] !~ /^#/) {
+			if ($script[$i] =~ /(-a|-d|-i|-s)/) {
+				# there is a command
+				# that takes a parameter
+				$cmd = $1;
+				$script[$i] =~ /(-.)\s+(.*)/;
+				# if no parameter, die
+				die "$cmd needs a parameter\n" unless $2;
 				$param = $2;
+				# clean up white space
 				$param =~ s/(\s+)$//g;
-				# check $param is not the empty string
-				if ($param ne "") {
-					# push cmd and param on cmdlist
-					push @cmdlist, ($cmd, $param);
-					
-			    } else {
-					# there is no parameter
+				# push cmd and param onto list
+				push @cmdlist, ($cmd, $param);
+				
+			} elsif ($script[$i] =~ /-l/) {
+				# command -l does not take a parameter;
+				push @cmdlist, "-l";
+			} elsif ($script[$i] =~ /-o/) {
+				# command -o does not take a parameter;
+				push @cmdlist, "-o";
+			} elsif ($script[$i] =~ /-w/) {
+				# -w may or may not take a file name parameter
+				$cmd = "-w";
+				# check for a parameter after -w
+				$script[$i] =~ /(-.)\s+(.*)/;
+				# if there is parameter
+				if (defined $2) {
+					# clean white space after parameter
+					$param = $2;
+					$param =~ s/(\s+)$//g;
+					# check $param is not the empty string
+					if ($param ne "") {
+						# push cmd and param on cmdlist
+						push @cmdlist, ($cmd, $param);
+						
+					} else {
+						# there is no parameter
+						push @cmdlist, "-w";
+					}
+				} else {
+					# no parameter
 					push @cmdlist, "-w";
 				}
-			} else {
-				# no parameter
-				push @cmdlist, "-w";
+			} elsif ($script[$i] =~ /-b/) {
+				# backup given for write command
+				# set backup flag
+				$backup = 1;
 			}
-		} elsif ($script[$i] =~ /-b/) {
-			# backup given for write command
-			# set backup flag
-			$backup = 1;
 		}
-
 	}	
 
 	# @cmdlist = (-a, /text/, -l, -i, /patten/text/ia, ...)

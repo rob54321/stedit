@@ -199,7 +199,7 @@ sub script {
 				# there is a command
 				# that takes a parameter
 				$cmd = $1;
-				$script[$i] =~ /(-.)\s+(.*)/;
+				$script[$i] =~ /(-.)\s+(.*)/s;
 				# if no parameter, die
 				die "$cmd needs a parameter\n" unless $2;
 				$param = $2;
@@ -360,7 +360,7 @@ sub parsearg {
 		# append /some text /
 		# delete /some text /i i is optional modifier
 		# stript components
-		$arg =~ /\/(.*)\/(.*)/;
+		$arg =~ /\/(.*)\/(.*)/s;
 		
 		$reflist->[0] = $1;
 		if ($2) { $reflist->[1] = $2; } else { $reflist->[1] = ""; }
@@ -368,14 +368,18 @@ sub parsearg {
 	} elsif ($cmd eq "i" || $cmd eq "s") {
 		# insert and subst
 		# take parameter /pattern/text/iabg optional modifiers
-		$arg =~ /\/(.*)\/(.*)\/(.*)/;
+		$arg =~ /\/(.*)\/(.*)\/(.*)/s;
 		$reflist ->[0] = $1;
 		if ($2) { $reflist->[1] = $2; } else { $reflist->[1] = ""; }
 		
 		if ($3) { $reflist->[2] = $3; } else { $reflist->[2] = ""; }
 		
 	}
-
+	
+	# for debugging
+	for(my $i=0; $i<scalar(@$reflist); $i++) {
+		print "reflist[$i] = $reflist->[$i]\n";
+	}
 	# check that the arg is not mal formed
 	die "StEdit->parsarg(): The arg = $arg for command $cmd is malformed\n" if scalar(@$reflist) == 0 or ! defined($reflist->[0]);
 

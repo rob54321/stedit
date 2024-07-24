@@ -11,7 +11,7 @@
 
 use strict;
 use warnings;
-# use lib "/home/robert/stedit/usr/local/lib/site_perl";
+use lib "/home/robert/stedit/usr/local/lib/site_perl";
 use StEdit;
 use cmdlOrder;
 # use Getopt::Std;

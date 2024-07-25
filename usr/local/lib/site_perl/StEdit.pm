@@ -206,6 +206,7 @@ sub script {
 				# clean up white space
 				$param =~ s/(\s+)$//g;
 				# push cmd and param onto list
+print "StEdit->script(): cmd = $cmd param = [$param]\n";
 				push @cmdlist, ($cmd, $param);
 				
 			} elsif ($script[$i] =~ /-l/) {

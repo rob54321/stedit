@@ -1,8 +1,8 @@
 Package: stedit
-Version: 2.12
+Version: 2.13
 Architecture: all
 Maintainer: Robert Key robkey@mighty.co.za
-Depends: perl
+Depends: perl, cpanminus
 Section: myown
 Priority: optional
 Description: Perl module for a stream editor. Methods: append, insert, delete, substitute, write. stedit.pl wrapper

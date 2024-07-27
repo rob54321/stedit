@@ -203,6 +203,29 @@ sub defaultparameter {
 	}
 } 
 
+####################################################
+# help method
+# this method displays all command of this module
+# and exits
+####################################################
+sub help {
+	print "use ANSI-C quoting \$'...' for interpolation of \\n or \' etc in text arguments\n";
+	print "stedit -f \"full pathname\" OR -F script with filename on line1 ie # filename\n";
+	print "-d (delete) \"/pattern/ie\"  - i for case insensitive search, e for delete line and following empty lines\n";
+	print "-a (append) \"text\"\n";
+	print "-i (insert) \"/pattern/text to insert/iab\" - -i case insensitive, a|b insert after|before\n";
+	print "-s (subst)  \"/pattern/replacement/ig\" -i case insensitive, g global\n";
+	print "-w (write)  \"new filename\"|default is original name if none given\n";
+	print "-b (backup file) makes a file.bak, only works with the -w switch\n";
+	print "-l (list edited file)\n";
+	print "-o (list original file with colour changes\n";
+	print "-F (script file name) run commands from file, file name can be obtained from line 1, # filename or from -f \n";
+	print "-V print version and exit\n";
+	print "pattern could be \$'^some line\$|^or.*another\$|^\$'\n";
+	print "-h (help)\n";
+	exit 0;
+}
+
 ###################################################
 ########### main entry
 ###################################################
@@ -234,13 +257,6 @@ my $count = scalar(@cmdlargs);
 # register the control hash
 $subcontrol = cmdlOrder->new(\%subhash, \@cmdlargs);
 
-# invoke usage if no arguments given
-# or help switch
-usage if $count == 0 || $opt_h;
-
-# set default parameter for 
-# getopts ("ad:f:hi:ls:t:w:ABDGIV");
-
 # print version and exit
 if ($opt_V) {
 	# print the installed version from dpkg-query
@@ -254,14 +270,14 @@ if ($opt_V) {
 	exit 0;
 }
 
+# invoke usage if no arguments given
+# or help switch
+help() if $count == 0 || $opt_h;
+
 # create the editor instance
 # this must be done before
-#if ($opt_f) {
-	$editor = StEdit->new();
-#} else {
-	# no file specified
-#	die "stedit: A file name must be specifed to edit\n";
-#}
+$editor = StEdit->new();
+
 
 # execute the subs in StEdit.pm
 $subcontrol->execsub();

@@ -14,6 +14,7 @@ package StEdit;
 use strict;
 use warnings;
 use File::Copy;
+use String::Escape qw(unbackslash);
 
 # file name of file to be edited
 my $fname;
@@ -67,7 +68,7 @@ sub new {
 	my $class = shift;
 
 # print "opt_f = " . $main::opt_f . " opt_F = " . $main::opt_F . " opt_i = [" . $main::opt_i . "]\n";
-	
+
 	# now find the file name. if -F script was given
 	# look in script file line 1 for # file name
 	# if no -F given then look for file name from -f
@@ -81,6 +82,7 @@ sub new {
 		$line = <$fs>;
 		chomp($line);
 		close ($fs);
+		
 		# check if first line is of form # name
 		if ($line =~ /^#\s+(.*)/) {
 			# $1 should be file name if defined
@@ -149,8 +151,6 @@ sub script {
 	my $self = shift @_;
 	my $sfile = shift @_;
 	
-	print "StEdit->script(): script file $sfile\n";
-	
 	# open file and read lines into an array
 	open my $sf, "<", $sfile or die "Could not open script file $sfile: $!\n";
 	
@@ -203,10 +203,12 @@ sub script {
 				# if no parameter, die
 				die "$cmd needs a parameter\n" unless $2;
 				$param = $2;
+print "StEdit->script(): param2 = [" . $2 . "]\n";
+
 				# clean up white space
 				$param =~ s/(\s+)$//g;
 				# push cmd and param onto list
-print "StEdit->script(): cmd = $cmd param = [$param]\n";
+print "StEdit->script(): cmd = " . $cmd . " param = [" . $param . "]\n";
 				push @cmdlist, ($cmd, $param);
 				
 			} elsif ($script[$i] =~ /-l/) {
@@ -254,7 +256,7 @@ print "StEdit->script(): cmd = $cmd param = [$param]\n";
 					$cmdlist[$i] =~ /-a/ && do {	# append command needs a parameter
 													# if on last element, then no parameter follows
 													if ($i < scalar(@cmdlist) - 1 and $cmdlist[$i+1] !~ /^-/) {
-														$self->append($cmdlist[$i+1]);
+														$self->append(unbackslash($cmdlist[$i+1]));
 														$i++;
 														last SWITCH;
 													} else {
@@ -278,7 +280,7 @@ print "StEdit->script(): cmd = $cmd param = [$param]\n";
 												
 					$cmdlist[$i] =~ /-i/ && do {	#insert must have a parameter, die if not
 													if ($i < scalar(@cmdlist) - 1 and $cmdlist[$i+1] !~ /^-/) {
-														$self->insert($cmdlist[$i+1]);
+														$self->insert(unbackslash($cmdlist[$i+1]));
 														$i++;
 														last SWITCH;
 													} else {
@@ -289,7 +291,7 @@ print "StEdit->script(): cmd = $cmd param = [$param]\n";
 												
 					$cmdlist[$i] =~ /-s/ && do {	#subs must have a parameter, die if not
 													if ($i < scalar(@cmdlist) - 1 and $cmdlist[$i+1] !~ /^-/) {
-														$self->subst($cmdlist[$i+1]);
+														$self->subst(unbackslash($cmdlist[$i+1]));
 														$i++;
 														last SWITCH;
 													} else {
@@ -379,7 +381,7 @@ sub parsearg {
 	
 	# for debugging
 	for(my $i=0; $i<scalar(@$reflist); $i++) {
-		print "reflist[$i] = $reflist->[$i]\n";
+		print "reflist[$i] = " . $reflist->[$i] . "\n";
 	}
 	# check that the arg is not mal formed
 	die "StEdit->parsarg(): The arg = $arg for command $cmd is malformed\n" if scalar(@$reflist) == 0 or ! defined($reflist->[0]);

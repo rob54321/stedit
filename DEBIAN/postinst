@@ -1,0 +1,4 @@
+#!/bin/bash
+# postinst for stedit
+# the Perl module String::Escape must be installed
+cpanm String::Escape

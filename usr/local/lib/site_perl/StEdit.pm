@@ -380,10 +380,11 @@ sub parsearg {
 	}
 	
 	# for debugging
-	for(my $i=0; $i<scalar(@$reflist); $i++) {
-		print "reflist[$i] = " . $reflist->[$i] . "\n";
-	}
+	#for(my $i=0; $i<scalar(@$reflist); $i++) {
+	#	print "reflist[$i] = " . $reflist->[$i] . "\n";
+	#}
 	# check that the arg is not mal formed
+
 	die "StEdit->parsarg(): The arg = $arg for command $cmd is malformed\n" if scalar(@$reflist) == 0 or ! defined($reflist->[0]);
 
 }
